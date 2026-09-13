@@ -1,0 +1,132 @@
+---
+// "<  [2]/10  >". The number box needs the script: a static host cannot turn a form submission into a path.
+interface Props {
+  page: number; // 1-based, the page being shown
+  urls: string[]; // every page of this list, in order
+}
+
+const { page, urls } = Astro.props;
+const total = urls.length;
+---
+
+{
+  total > 1 && (
+    <nav class="pager" aria-label="ページ送り">
+      {page > 1 ? (
+        <a class="step prev" href={urls[page - 2]} rel="prev" aria-label="前のページ" />
+      ) : (
+        <span class="step prev off" />
+      )}
+
+      <form class="jump" data-urls={JSON.stringify(urls)}>
+        <label class="visually-hidden" for="pager-page">
+          ページ番号
+        </label>
+        <input
+          id="pager-page"
+          name="page"
+          type="number"
+          inputmode="numeric"
+          min="1"
+          max={total}
+          value={page}
+        />
+        <span class="total">/ {total}</span>
+      </form>
+
+      {page < total ? (
+        <a class="step next" href={urls[page]} rel="next" aria-label="次のページ" />
+      ) : (
+        <span class="step next off" />
+      )}
+    </nav>
+  )
+}
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('.pager .jump');
+  form?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const urls: string[] = JSON.parse(form.dataset.urls!);
+    const input = form.elements.namedItem('page') as HTMLInputElement;
+    // Out of range, empty and non-numeric all fall back to a page that exists
+    const page = Math.min(Math.max(Math.trunc(Number(input.value)) || 1, 1), urls.length);
+    location.href = urls[page - 1];
+  });
+</script>
+
+<style>
+  .pager {
+    --control: 2rem;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    margin-top: 2.5rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .step {
+    display: grid;
+    place-items: center;
+    width: var(--control);
+    height: var(--control);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: inherit;
+  }
+
+  /* The chevron: two sides of a square, rotated */
+  .step::before {
+    content: '';
+    width: 0.45em;
+    height: 0.45em;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+  }
+
+  .prev::before {
+    transform: translateX(0.1em) rotate(135deg);
+  }
+
+  .next::before {
+    transform: translateX(-0.1em) rotate(-45deg);
+  }
+
+  a.step:hover {
+    color: var(--text);
+    border-color: var(--text-muted);
+  }
+
+  /* Kept, greyed out, so the row never changes width */
+  .off {
+    opacity: 0.35;
+  }
+
+  .jump {
+    display: flex;
+    align-items: center;
+    gap: 0.4em;
+  }
+
+  /* No spinners: the arrows beside the box already step through the pages */
+  .jump input {
+    width: 3.5em;
+    height: var(--control);
+    padding: 0 0.5em;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    font: inherit;
+    text-align: center;
+    appearance: textfield;
+  }
+
+  .jump input::-webkit-inner-spin-button,
+  .jump input::-webkit-outer-spin-button {
+    appearance: none;
+  }
+</style>

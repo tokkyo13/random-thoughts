@@ -1,0 +1,91 @@
+---
+import { SITE_TITLE, NAV_ITEMS } from '../consts';
+import Logo from '../assets/logo.svg';
+
+const path = Astro.url.pathname;
+// A prefix match, so an article page (/journal/<id>/) marks Journal as current
+const isCurrent = (href: string) => path.startsWith(href);
+---
+
+<header class="site-header">
+  <div class="bar">
+    <a class="brand" href="/" aria-label={SITE_TITLE}>
+      <Logo />
+    </a>
+
+    <nav aria-label="メインメニュー">
+      <ul>
+        {
+          NAV_ITEMS.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={isCurrent(item.href) ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+
+  {/* Inside the sticky header, so the row stays under the menu bar */}
+  <slot name="row" />
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bar {
+    max-width: var(--frame-width);
+    margin-inline: auto;
+    padding: 0 var(--gutter);
+    height: 3.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  .brand :global(svg) {
+    display: block;
+    height: var(--fs-xl);
+    width: auto;
+  }
+
+  nav ul {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 4vw, 1.75rem);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  nav a {
+    display: inline-block;
+    padding: 0.25rem 0;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: var(--underline) solid transparent;
+  }
+
+  nav a[aria-current='page'] {
+    border-bottom-color: var(--accent);
+  }
+</style>

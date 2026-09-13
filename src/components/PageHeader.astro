@@ -1,0 +1,47 @@
+---
+// Holds the page's only h1. Children go on the lead line, left of the lead.
+interface Props {
+  title: string;
+  lead?: string;
+}
+
+const { title, lead } = Astro.props;
+---
+
+<div class="page-header">
+  <h1 class="page-title">{title}</h1>
+  {
+    (lead || Astro.slots.has('default')) && (
+      <div class="page-lead-row">
+        <slot />
+        {lead && <p class="page-lead">{lead}</p>}
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .page-header {
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+  }
+
+  .page-title {
+    margin: 0;
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.5;
+  }
+
+  .page-lead-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+
+  .page-lead {
+    margin: 0;
+    color: var(--text-muted);
+  }
+</style>

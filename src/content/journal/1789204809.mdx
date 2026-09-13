@@ -1,0 +1,233 @@
+---
+title: '【備忘録】記事で使えるコードスニペット'
+pubDate: 2026-09-12
+cover: cover-e5a86357
+draft: true
+---
+
+Journal の記事は MDX で書いている（つまり、この記事も）。MDX は Markdown の拡張なので、Markdown の書き方はそのまま使える。
+加えて、MDX は React のコンポーネントを埋め込める。このサイトでは、いくつか独自のコンポーネントを使用しているので、それらについてもここにまとめておく。
+
+# フロントマター
+
+````mdx
+---
+title: 'Ethica'
+pubDate: 1677-02-21
+cover: cover-d2eb53f3
+draft: true
+---
+````
+
+必須は `title` と `pubDate` のみ。`draft: true` の間は本番のビルドから外れ、開発サーバーでだけ見える。`cover` には一覧に出すサムネイルの画像名を拡張子なしで書く。画像は空のままでもエラーにはならず、サムネイルが出ないだけ。
+
+# コメント
+
+````js
+{/* ノーコメント */}
+````
+
+コメントが書きたい場合、`{/* ... */}` とすればWebページに表示されない。\
+HTMLのコメント `<!-- ... -->` は構文エラーが発生し、ビルドに失敗するので注意。
+
+# HTML タグ
+
+````html
+"ぶんしょう"は、<br />プレーする人が<br />よみやすいように<br />かいてあげましょう。
+````
+
+"ぶんしょう"は、<br />プレーする人が<br />よみやすいように<br />かいてあげましょう。
+
+HTML のタグは、必ず閉じる必要がある。改行は `<br>` ではなく `<br />` と書く。
+
+# 波括弧
+
+````mdx
+\{ ´･ω･` }
+````
+
+\{ ´･ω･` }
+
+開き波括弧は JavaScript の式として読まれるので、文字として出したいときは `\{` と書く。
+
+# 見出し
+
+````mdx
+# H1
+## H2
+### H3
+#### H4
+````
+
+目次に並ぶのは `#` だけ。
+
+# アンカーリンク
+
+````mdx
+[それゆけ](#アンカーリンク)
+````
+
+[それゆけ](#アンカーリンク)
+
+見出しを書くと、自動で `id` が付与され、アンカーリンクとして使えるようになる。\
+`id` の生成ルールは、[`github-slugger`](https://github.com/Flet/github-slugger#usage) の実装に従う。
+
+
+# 文字の装飾
+
+````mdx
+**太字**、*斜体*、~~打ち消し~~、`インラインコード`。
+
+[リンク](https://kids.yahoo.co.jp/) と、裸の URL https://kids.yahoo.co.jp/ が自動でリンクになる。
+
+行末にバックスラッシュを置くと\
+そこで改行できる。
+````
+
+**太字**、*斜体*、~~打ち消し~~、`インラインコード`。（斜体はフォントに依存）
+
+[リンク](https://kids.yahoo.co.jp/) と、裸の URL https://kids.yahoo.co.jp/ が自動でリンクになる。
+
+行末にバックスラッシュを置くと\
+そこで改行できる。
+
+# リスト
+
+````mdx
+- 箇条書きは
+- 字下げで
+  - ネストできる
+
+1. カステラ
+2. 電話
+3. おやつ
+
+- [x] 頑張る
+- [ ] 結果を出す
+````
+
+- 箇条書きは
+- 字下げで
+  - ネストできる
+
+1. カステラ
+2. 電話
+3. おやつ
+
+- [x] 頑張る
+- [ ] 結果を出す
+
+# 引用と区切り線
+
+````mdx
+> "Nature does not hurry, yet everything is accomplished." ―Lao Tzu
+
+---
+````
+
+> "Nature does not hurry, yet everything is accomplished." ―Lao Tzu
+
+---
+
+# 表
+
+````mdx
+| ガールズ | 多めの成分 |
+| --- | --- |
+| ブロッサム | 素敵なもの |
+| バブルス | お砂糖 |
+| バターカップ | スパイス |
+````
+
+| ガールズ | 多めの成分 |
+| --- | --- |
+| ブロッサム | 素敵なもの |
+| バブルス | お砂糖 |
+| バターカップ | スパイス |
+
+画面より広い表は、表だけが横にスクロールする。
+
+# コードブロック `<Code>`
+
+言語を指定すると色がつく。配色テーマは [Nord](https://www.nordtheme.com/)。
+
+`````mdx
+```rs
+fn main() {
+    println!("I'm half crazy, all for the love of you.");
+}
+```
+`````
+
+```rs
+fn main() {
+    println!("I'm half crazy, all for the love of you.");
+}
+```
+
+長い行は折り返さずに横スクロールする。マウスを乗せると右上にコピーボタンが出る。
+
+標準のコードブロックを `Code` で囲むと、ブロックの上にファイル名を出せる。
+
+`````mdx
+<Code file="simple_mcp.rs">
+```rs
+fn main() {
+    println!("THERE'S A 68.71% CHANCE YOU'RE RIGHT.");
+    println!("END OF LINE.");
+}
+```
+</Code>
+`````
+
+<Code file="simple_mcp.rs">
+```rs
+fn main() {
+    println!("THERE'S A 68.71% CHANCE YOU'RE RIGHT.");
+    println!("END OF LINE.");
+}
+```
+</Code>
+
+`file` を省略した `Code` は素のコードブロックと同じ見た目になる。
+
+# 画像 `<Fig />`
+
+````mdx
+<Fig src="figure-6c26e51a" caption="ロックの残骸" />
+````
+
+<Fig src="figure-6c26e51a" caption="ロックの残骸" />
+
+キャプション付きの画像が表示できる。（`caption` は省略可能）\
+`src` はこの記事の画像置き場にある画像の名前で、拡張子は書かない。画像の場所と必要な接尾辞は自動で解決される。
+
+基本的に外部の画像を直リンクはしないと思うが、もし使う場合は以下の構文が使える。
+
+```mdx
+![キャプション](URL)
+```
+
+```mdx
+<img src="URL" alt="キャプション" />
+```
+
+# 補足情報 `<Note>`
+
+````mdx
+<Note type="info">6月は雨が多い</Note>
+<Note type="tip">傘をさすと濡れない</Note>
+<Note type="important">傘は開いて使う</Note>
+<Note type="warning">傘を振り回さない</Note>
+<Note type="caution">傘で人の顔を突かない</Note>
+````
+
+<Note type="info">6月は雨が多い</Note>
+<Note type="tip">傘をさすと濡れない</Note>
+<Note type="important">傘は開いて使う</Note>
+<Note type="warning">傘を振り回さない</Note>
+<Note type="caution">傘で人の顔を突かない</Note>
+
+`Note` で囲むと補足情報を強調表示できる。`type` は必須で、省くとビルドが失敗する。`info` の色は本文と同じ強調色で、`tip` なら緑、`important` は紫、`warning` は黄、`caution` は赤となる。
+
+GitHub の Markdown で使用できる [`Alerts`](https://docs.github.com/ja/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#alerts) の見た目を真似ている。

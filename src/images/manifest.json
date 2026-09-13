@@ -1,0 +1,39 @@
+{
+  "images": {
+    "home/cover-2b0dd78b": {
+      "ext": "jpg",
+      "width": 2560,
+      "height": 1920,
+      "size": 1901225,
+      "md5": "2b0dd78bd55f2c5f2410825af143e68a",
+      "variants": [
+        640,
+        1024,
+        1600
+      ]
+    },
+    "journal/1789204809/cover-e5a86357": {
+      "ext": "png",
+      "width": 1920,
+      "height": 1080,
+      "size": 63530,
+      "md5": "e5a863578794cca273b07d9e2207e469",
+      "variants": [
+        320,
+        640
+      ]
+    },
+    "journal/1789204809/figure-6c26e51a": {
+      "ext": "jpg",
+      "width": 3024,
+      "height": 2268,
+      "size": 2000151,
+      "md5": "6c26e51a2d09364ab4b1343168a655a8",
+      "variants": [
+        448,
+        896,
+        1792
+      ]
+    }
+  }
+}

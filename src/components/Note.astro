@@ -1,0 +1,80 @@
+---
+// The kinds follow GitHub's alerts.
+import Info from '../assets/icons/info.svg';
+import Tip from '../assets/icons/tip.svg';
+import Important from '../assets/icons/important.svg';
+import Warning from '../assets/icons/warning.svg';
+import Caution from '../assets/icons/caution.svg';
+
+const KINDS = {
+  info: { icon: Info, label: 'メモ' },
+  tip: { icon: Tip, label: 'ヒント' },
+  important: { icon: Important, label: '重要' },
+  warning: { icon: Warning, label: '注意' },
+  caution: { icon: Caution, label: '警告' },
+};
+
+interface Props {
+  type: keyof typeof KINDS;
+}
+
+const { type } = Astro.props;
+// MDX is not type-checked, so a missing or misspelled type is caught here
+if (!Object.hasOwn(KINDS, type)) throw new Error(`<Note> needs type="${Object.keys(KINDS).join('|')}", got "${type}"`);
+const { icon: Icon, label } = KINDS[type];
+---
+
+<aside class:list={['callout', type]}>
+  <div class="callout-mark">
+    <Icon />
+    <span class="visually-hidden">{label}</span>
+  </div>
+  <slot />
+</aside>
+
+<style>
+  /* Same left rule as a blockquote */
+  .callout {
+    --callout-color: var(--accent);
+
+    margin: 1.6em 0;
+    padding: 0.2em 0 0.2em 1.25em;
+    border-left: 2px solid var(--callout-color);
+  }
+
+  .tip {
+    --callout-color: var(--tip);
+  }
+
+  .important {
+    --callout-color: var(--important);
+  }
+
+  .warning {
+    --callout-color: var(--warning);
+  }
+
+  .caution {
+    --callout-color: var(--caution);
+  }
+
+  .callout-mark {
+    margin: 0 0 0.2em;
+    line-height: 1;
+    color: var(--callout-color);
+  }
+
+  .callout-mark :global(svg) {
+    width: 1.25rem;
+    height: 1.25rem;
+    fill: currentColor;
+  }
+
+  .callout :global(p) {
+    margin: 0.6em 0;
+  }
+
+  .callout :global(p:last-child) {
+    margin-bottom: 0;
+  }
+</style>

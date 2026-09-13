@@ -1,0 +1,58 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { AUTHOR } from '../consts';
+import avatar from '../assets/avatar.png';
+---
+
+<BaseLayout title="About" description="このサイトについて">
+  <PageHeader title="About" />
+
+  <div class="profile">
+    <Image class="avatar" src={avatar} alt="" width={320} height={320} />
+
+    <div class="prose body">
+      <h2 class="name">{AUTHOR.name} / {AUTHOR.latin}</h2>
+      <!-- TODO: self-introduction -->
+      <p>絵、電子、情報</p>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .profile {
+    display: flex;
+    gap: 2rem;
+  }
+
+  .avatar {
+    flex: 0 0 10rem;
+    width: 10rem;
+    height: 10rem;
+    border-radius: 1.2rem;
+    object-fit: cover;
+  }
+
+  .body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .name {
+    font-size: var(--fs-lg);
+  }
+
+  @media (max-width: 32rem) {
+    .profile {
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    /* Full width, instead of shrinking to its content as align-items: center would */
+    .body {
+      align-self: stretch;
+    }
+  }
+</style>

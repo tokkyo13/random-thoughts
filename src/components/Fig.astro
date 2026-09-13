@@ -1,0 +1,15 @@
+---
+import { image, SIZES } from '../images';
+
+interface Props {
+  src: string; // image name in the article's directory
+  caption?: string;
+}
+
+const { src, caption } = Astro.props;
+---
+
+<figure>
+  <img {...image(`journal/${Astro.params.id}/${src}`)} sizes={SIZES.prose} alt="" />
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>

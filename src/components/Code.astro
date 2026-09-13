@@ -1,0 +1,49 @@
+---
+interface Props {
+  file?: string;
+}
+
+const { file } = Astro.props;
+---
+
+<div class="code">
+  {file && <div class="file">{file}</div>}
+
+  <slot />
+</div>
+
+<style>
+  .code {
+    margin: 1.6em 0;
+  }
+
+  /* Specific enough to outweigh the margin Pre.astro gives the block */
+  .code > .file + :global(.block) {
+    margin-top: 0;
+  }
+
+  /* A tab on the block: it overlaps the block's top border by 1px so the two read as one sheet */
+  .file {
+    width: fit-content;
+    max-width: 100%;
+    position: relative;
+    z-index: 1;
+    margin-bottom: -1px;
+    padding: 0.3em 1.5em;
+    border: 1px solid var(--border);
+    border-bottom: 0;
+    border-radius: var(--radius) var(--radius) 0 0;
+    background: var(--code-bg);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .code:has(.file) :global(pre) {
+    border-top-left-radius: 0;
+  }
+</style>

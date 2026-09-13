@@ -1,0 +1,62 @@
+---
+import '../styles/global.css';
+import SiteHeader from '../components/SiteHeader.astro';
+import ExternalLink from '../components/ExternalLink.astro';
+import { AUTHOR, FIRST_PUBLISHED, JOURNAL_FEED_TITLE, SITE_DESCRIPTION, SITE_LANG, SITE_TITLE, SOURCE_URL } from '../consts';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = SITE_DESCRIPTION } = Astro.props;
+const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
+---
+
+<!doctype html>
+<html lang={SITE_LANG}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={JOURNAL_FEED_TITLE}
+      href="/journal/rss.xml"
+    />
+  </head>
+  <body>
+    <SiteHeader>
+      <slot name="header-row" slot="row" />
+    </SiteHeader>
+
+    <main class="site-main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <p>&copy; {FIRST_PUBLISHED} {AUTHOR.latin} | <ExternalLink href={SOURCE_URL}>Source</ExternalLink> | <a href="/journal/rss.xml">RSS</a></p>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+  }
+
+  /* Same frame as the header bar */
+  .site-footer p {
+    max-width: var(--frame-width);
+    margin: 0 auto;
+    padding: 0.9rem var(--gutter);
+    line-height: 1.6;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.04em;
+  }
+</style>

@@ -1,0 +1,85 @@
+---
+// The copy button sits outside the pre, so it stays put while the code scrolls sideways.
+import type { HTMLAttributes } from 'astro/types';
+import Copy from '../assets/icons/copy.svg';
+import Copied from '../assets/icons/copied.svg';
+
+type Props = HTMLAttributes<'pre'>;
+---
+
+<div class="block">
+  <pre {...Astro.props}><slot /></pre>
+  <button type="button" class="copy" aria-label="コードをコピー">
+    <Copy class="idle" />
+    <Copied class="done" />
+  </button>
+</div>
+
+<script>
+  for (const button of document.querySelectorAll<HTMLButtonElement>('.copy')) {
+    button.addEventListener('click', async () => {
+      const code = button.previousElementSibling?.textContent ?? '';
+      await navigator.clipboard.writeText(code);
+      button.dataset.done = '';
+      setTimeout(() => delete button.dataset.done, 1500);
+    });
+  }
+</script>
+
+<style>
+  .block {
+    position: relative;
+    margin: 1.6em 0;
+  }
+
+  .block pre {
+    margin: 0;
+  }
+
+  .copy {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    display: grid;
+    padding: 0.3rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--code-bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .block:hover .copy,
+  .copy:focus-visible {
+    opacity: 1;
+  }
+
+  @media (hover: none) {
+    .copy {
+      opacity: 1;
+    }
+  }
+
+  .copy:hover {
+    color: var(--text);
+  }
+
+  .copy :global(svg) {
+    grid-area: 1 / 1;
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: currentColor;
+  }
+
+  /* Both icons share one grid cell; data-done swaps which is visible */
+  .copy :global(.done),
+  .copy[data-done] :global(.idle) {
+    visibility: hidden;
+  }
+
+  .copy[data-done] :global(.done) {
+    visibility: visible;
+  }
+</style>

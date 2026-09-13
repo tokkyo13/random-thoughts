@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import ExternalLink from '../components/ExternalLink.astro';
+
+// TODO: placeholder URLs
+const links = [
+  { label: 'Bluesky', url: 'https://bsky.app/profile/tokkyo13.bsky.social' },
+  { label: 'Pixiv', url: 'https://pixiv.me/tokkyo13' },
+  { label: 'GitHub', url: 'https://github.com/tokkyo13' },
+];
+---
+
+<BaseLayout title="Links" description="外部サイトへのリンク">
+  <PageHeader title="Links" lead="外部サイト" />
+
+  <div class="prose">
+    <ul>
+      {
+        links.map((link) => (
+          <li>
+            <ExternalLink href={link.url}>{link.label}</ExternalLink>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>

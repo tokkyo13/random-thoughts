@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { image } from "../images";
+---
+
+<BaseLayout>
+  <figure>
+    <img {...image("home/cover-2b0dd78b", "eager")} alt="" />
+  </figure>
+</BaseLayout>
+
+<style>
+  /* Centers the image vertically, on this page only */
+  :global(.site-main) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    border-radius: var(--radius);
+  }
+</style>

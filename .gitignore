@@ -1,0 +1,19 @@
+# build output and generated types
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# credential files; the *.env.example templates stay tracked. See README.md
+*.env
+
+# local clone of the R2 image bucket; only the root .gitkeep is tracked, the rest is restored from R2
+r2-clone/*
+!r2-clone/.gitkeep
+
+# personal settings; see "Claude Code" in README.md for the recommended .claude/settings.json
+.claude/
+.vscode/
+.idea/
+.DS_Store

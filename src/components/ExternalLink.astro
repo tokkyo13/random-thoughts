@@ -1,0 +1,9 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'a'>;
+---
+
+<a {...Astro.props} target="_blank" rel="noopener noreferrer"
+  ><slot /><span class="visually-hidden">（新しいタブで開く）</span></a
+>

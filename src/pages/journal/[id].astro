@@ -1,0 +1,271 @@
+---
+import { render } from 'astro:content';
+import { listPosts } from '../../posts';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Fig from '../../components/Fig.astro';
+import Note from '../../components/Note.astro';
+import ProseLink from '../../components/ProseLink.astro';
+import Code from '../../components/Code.astro';
+import Pre from '../../components/Pre.astro';
+
+export async function getStaticPaths() {
+  return (await listPosts()).map((post) => ({
+    params: { id: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+const toc = headings.filter((h) => h.depth === 1);
+---
+
+<BaseLayout title={post.data.title}>
+  {
+    /* The side TOC becomes this pulldown in the header where the margin is too narrow */
+    toc.length > 0 && (
+      <details class="toc-bar" slot="header-row">
+        <summary>目次</summary>
+        <nav aria-label="目次">
+          <ul>
+            {toc.map((h) => (
+              <li>
+                <a href={`#${h.slug}`}>{h.text}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+    )
+  }
+
+  <div class="layout">
+    <article>
+      <header class="post-header">
+        <p class="meta">
+          <FormattedDate date={post.data.pubDate} />
+        </p>
+
+        <h1 class="title">{post.data.title}</h1>
+      </header>
+
+      <div class="prose">
+        <Content components={{ Fig, Note, Code, pre: Pre, a: ProseLink }} />
+      </div>
+    </article>
+
+    {
+      toc.length > 0 && (
+        <aside class="toc">
+          <nav aria-label="目次">
+            <ul>
+              {toc.map((h) => (
+                <li>
+                  <a href={`#${h.slug}`}>{h.text}</a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
+      )
+    }
+  </div>
+
+  <nav class="post-nav">
+    <a href="/journal/">&larr; 記事一覧へ</a>
+  </nav>
+</BaseLayout>
+
+<script>
+  // Picking a heading, or clicking outside, closes the pulldown. Without the script it still works.
+  const bar = document.querySelector<HTMLDetailsElement>('.toc-bar');
+  document.addEventListener('click', (event) => {
+    const target = event.target as Element;
+    if (bar && (target.closest('a') || !target.closest('.toc-bar'))) bar.open = false;
+  });
+</script>
+
+<style>
+  .layout {
+    --toc-width: 11rem;
+    --toc-gap: 2.5rem;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--toc-width);
+    gap: var(--toc-gap);
+    align-items: start;
+    /* The TOC hangs into the right margin; the prose keeps its width */
+    margin-right: calc((var(--toc-width) + var(--toc-gap)) * -1);
+  }
+
+  .toc-bar {
+    display: none;
+  }
+
+  .toc {
+    position: sticky;
+    top: 5rem; /* below the 3.75rem header */
+    max-height: calc(100dvh - 8rem);
+    overflow-y: auto;
+    font-size: var(--fs-xs);
+    line-height: 1.7;
+    border-left: 1px solid var(--border);
+    padding-left: 1rem;
+  }
+
+  .toc ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .toc li + li {
+    margin-top: 0.4rem;
+  }
+
+  .toc a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .toc a:hover {
+    color: var(--text);
+  }
+
+  /* Headings jumped to stay clear of the header */
+  .prose :global(:is(h1, h2, h3)) {
+    scroll-margin-top: 5rem;
+  }
+
+  /* The side TOC fits when the viewport is at least
+     --measure + gutter * 2 + (--toc-width + --toc-gap - gutter) * 2 = 56 + 5 + 22 = 83rem
+     (--frame-width in global.css). Narrower, it would scroll the page sideways */
+  @media (max-width: 83rem) {
+    .layout {
+      /* Not 1fr, which cannot shrink below a wide code block */
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+      margin-right: 0;
+    }
+
+    .toc {
+      display: none;
+    }
+
+    .toc-bar {
+      display: block;
+      border-top: 1px solid var(--border);
+    }
+
+    .toc-bar[open] {
+      background: var(--surface);
+    }
+
+    .toc-bar summary {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      max-width: var(--frame-width);
+      margin-inline: auto;
+      padding: 0.55rem var(--gutter);
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .toc-bar summary::-webkit-details-marker {
+      display: none;
+    }
+
+    /* The chevron: two sides of a square, rotated */
+    .toc-bar summary::after {
+      content: '';
+      width: 0.45em;
+      height: 0.45em;
+      border-right: 1.5px solid currentColor;
+      border-bottom: 1.5px solid currentColor;
+      transform: translateY(-0.15em) rotate(45deg);
+    }
+
+    .toc-bar[open] summary::after {
+      transform: translateY(0.1em) rotate(225deg);
+    }
+
+    /* Positioned against the sticky header, its containing block */
+    .toc-bar nav {
+      position: absolute;
+      left: 0;
+      right: 0;
+      font-size: var(--fs-xs);
+      line-height: 1.7;
+      max-height: 60dvh;
+      overflow-y: auto;
+      padding-bottom: 0.9rem;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .toc-bar ul {
+      max-width: var(--frame-width);
+      margin: 0 auto;
+      padding: 0 var(--gutter);
+      list-style: none;
+    }
+
+    .toc-bar li + li {
+      margin-top: 0.4rem;
+    }
+
+    .toc-bar a {
+      display: block;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .toc-bar summary:hover,
+    .toc-bar a:hover {
+      color: var(--text);
+    }
+
+    /* Clear of the header and the pulldown bar */
+    .prose :global(:is(h1, h2, h3)) {
+      scroll-margin-top: 7.5rem;
+    }
+  }
+
+  .post-header {
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+  }
+
+  .meta {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    letter-spacing: 0.04em;
+  }
+
+  .title {
+    margin: 0.5rem 0 0;
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.6;
+  }
+
+  .post-nav {
+    margin-top: 4rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .post-nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .post-nav a:hover {
+    color: var(--text);
+  }
+</style>
