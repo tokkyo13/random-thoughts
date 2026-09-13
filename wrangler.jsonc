@@ -1,0 +1,14 @@
+// Cloudflare Workers: serves dist/ as static assets, with no Worker script. See README.md.
+{
+  "name": "random-thoughts",
+  "compatibility_date": "2026-09-13",
+  "assets": {
+    "directory": "./dist",
+    // dist/404.html, from src/pages/404.astro
+    "not_found_handling": "404-page"
+  },
+  "routes": [{ "pattern": "tokkyo13.net", "custom_domain": true }],
+  // tokkyo13.net is the only address; www is redirected to it by a Cloudflare Redirect Rule
+  "workers_dev": false,
+  "preview_urls": false
+}

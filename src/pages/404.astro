@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+---
+
+<BaseLayout title="Not Found" description="ページが見つかりません">
+  <PageHeader title="Not Found" lead="お探しのページは見つかりませんでした" />
+
+  <div class="prose">
+    <p><a href="/">トップへ戻る</a></p>
+  </div>
+</BaseLayout>
