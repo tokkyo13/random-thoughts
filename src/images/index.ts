@@ -1,5 +1,5 @@
 import manifest from './manifest.json';
-import { IMAGE_ORIGIN, type Manifest } from './config';
+import { IMAGE_ORIGIN, variantKey, type Manifest } from './config';
 
 const { images } = manifest as Manifest;
 
@@ -13,7 +13,7 @@ export function image(key: string, loading: 'lazy' | 'eager' = 'lazy') {
   if (!entry) {
     throw new Error(`Image "${key}" is not in src/images/manifest.json. Run "npm run img apply".`);
   }
-  const url = (w: number) => `${IMAGE_ORIGIN}/${key}.${w}w.webp`;
+  const url = (w: number) => `${IMAGE_ORIGIN}/${variantKey(key, w)}`;
   return {
     src: url(entry.variants.at(-1)!),
     srcset: entry.variants.map((w) => `${url(w)} ${w}w`).join(', '),

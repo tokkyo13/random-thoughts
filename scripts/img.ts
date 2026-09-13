@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import readline from 'node:readline/promises';
 import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
-import { AREAS, NAME_HASH, ORIGINALS_BUCKET, VARIANTS_BUCKET, type Manifest } from '../src/images/config.ts';
+import { AREAS, NAME_HASH, ORIGINALS_BUCKET, VARIANTS_BUCKET, variantKey, type Manifest } from '../src/images/config.ts';
 import {
   collectRefs, objectKeys, planGc, planSync, splitKey, variantWidths, type Items, type LocalFile, type SyncPlan,
 } from './img-plan.ts';
@@ -47,8 +47,9 @@ function r2() {
     if (!res.ok) throw new Error(`${method} ${bucket}/${key}: ${res.status} ${await res.text()}`);
     return res;
   };
-  // Keys never collide across buckets: variants end in ".<width>w.webp", originals do not.
-  const bucketFor = (key: string) => (/\.\d+w\.webp$/.test(key) ? VARIANTS_BUCKET : ORIGINALS_BUCKET);
+  // Keys never collide across buckets: variants end in ".<width>w.avif", originals do not
+  // (an original name has no dot before its extension).
+  const bucketFor = (key: string) => (/\.\d+w\.avif$/.test(key) ? VARIANTS_BUCKET : ORIGINALS_BUCKET);
   const listBucket = async (bucket: string) => {
     const objects = new Map<string, number>();
     let token = '';
@@ -160,8 +161,8 @@ async function main() {
     // Variants first, original last: an original on R2 marks a finished upload.
     // sharp drops all metadata (EXIF, GPS) from the variants.
     for (const w of variants) {
-      const webp = await sharp(buf).rotate().resize({ width: w }).webp({ quality: 80 }).toBuffer();
-      await bucket.put(`${key}.${w}w.webp`, webp, 'image/webp');
+      const avif = await sharp(buf).rotate().resize({ width: w }).avif({ quality: 50 }).toBuffer();
+      await bucket.put(variantKey(key, w), avif, 'image/avif');
     }
     await bucket.put(`${key}.${u.ext}`, buf, MIME[u.ext]);
     const to = path.join(ROOT, u.dir, `${u.stem}.${u.ext}`);

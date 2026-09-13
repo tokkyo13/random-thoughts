@@ -1,5 +1,5 @@
 // Planning logic for img.ts, kept free of I/O so img-plan.test.ts can check every rule.
-import { AREAS, NAME_HASH, type ImageEntry, type Manifest } from '../src/images/config.ts';
+import { AREAS, NAME_HASH, variantKey, type ImageEntry, type Manifest } from '../src/images/config.ts';
 
 const EXT_ALIASES: Record<string, string> = { jpeg: 'jpg', tiff: 'tif' };
 const EXTS = new Set(['jpg', 'png', 'webp', 'avif', 'gif', 'tif']);
@@ -47,7 +47,7 @@ export function variantWidths(dir: string, type: string, width: number): number[
 
 /** The original first, then the variants. */
 export function objectKeys(key: string, entry: ImageEntry): string[] {
-  return [`${key}.${entry.ext}`, ...entry.variants.map((w) => `${key}.${w}w.webp`)];
+  return [`${key}.${entry.ext}`, ...entry.variants.map((w) => variantKey(key, w))];
 }
 
 function normalizeExt(name: string): string {

@@ -7,7 +7,7 @@ const J = 'journal/1789139909';
 const MD5 = 'a1b2c3d4e5f60718293a4b5c6d7e8f90'; // -> figure-a1b2c3d4, cover-a1b2c3d4
 const OTHER = 'ffff0000ffff0000ffff0000ffff0000';
 const entry = { ext: 'jpg', width: 1000, height: 800, size: 10, md5: MD5, variants: [448] };
-const objects = (stem: string) => new Map([[`${J}/${stem}.jpg`, 10], [`${J}/${stem}.448w.webp`, 5]]);
+const objects = (stem: string) => new Map([[`${J}/${stem}.jpg`, 10], [`${J}/${stem}.448w.avif`, 5]]);
 const synced = objects('figure-a1b2c3d4');
 const file = (dir: string, name: string, md5 = MD5) => ({ dir, name, md5, size: 10 });
 

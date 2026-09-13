@@ -9,6 +9,9 @@ export const ORIGINALS_BUCKET = 'random-thoughts-images-origin';
 // bytes, which is what makes the immutable cache header safe.
 export const NAME_HASH = 8;
 
+// Changing the format renames every variant; "npm run img apply" then regenerates them.
+export const variantKey = (key: string, width: number) => `${key}.${width}w.avif`;
+
 type AreaSpec = {
   perItem: boolean; // one directory per item ("journal/<id>/") or one flat directory ("home/")
   // Variant widths per type. A new file whose name starts with no type gets the first one.
