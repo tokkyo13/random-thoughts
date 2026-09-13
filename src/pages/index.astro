@@ -1,11 +1,11 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { image } from "../images";
+import { image, SIZES } from "../images";
 ---
 
 <BaseLayout>
   <figure>
-    <img {...image("home/cover-2b0dd78b", "eager")} alt="" />
+    <img {...image("home/cover-2b0dd78b", "eager")} sizes={SIZES.prose} fetchpriority="high" alt="" />
   </figure>
 </BaseLayout>
 
