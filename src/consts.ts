@@ -4,8 +4,7 @@ export const SITE_LANG = 'ja';
 // latin is used in the copyright notice.
 export const AUTHOR = { name: '特許13', latin: 'tokkyo13' };
 export const FIRST_PUBLISHED = 2026;
-// TODO: placeholder until the repository is published.
-export const SOURCE_URL = 'https://github.com/tokkyo13/random_thoughts';
+export const SOURCE_URL = 'https://github.com/tokkyo13/random-thoughts';
 
 export const SITE_DESCRIPTION = `${AUTHOR.name}の個人サイトです。`;
 export const JOURNAL_FEED_TITLE = `Journal | ${SITE_TITLE}`;
