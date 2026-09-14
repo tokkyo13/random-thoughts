@@ -25,7 +25,8 @@ export function image(key: string, loading: 'lazy' | 'eager' = 'lazy') {
 }
 
 /** Like image(), but undefined for an empty or unknown key, so a list shows its empty frame. */
-export const optionalImage = (key: string | undefined) => (key && images[key] ? image(key) : undefined);
+export const optionalImage = (key: string | undefined, loading?: 'lazy' | 'eager') =>
+  key && images[key] ? image(key, loading) : undefined;
 
 // Each mirrors a layout in CSS. The page column is 56rem plus two gutters of at most 2.5rem: 61rem.
 export const SIZES = {

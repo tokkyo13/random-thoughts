@@ -25,7 +25,7 @@ export const AREAS: Record<string, AreaSpec> = {
     perItem: true,
     types: {
       figure: [448, 896, 1792], // prose column stops at 56rem = 896px
-      cover: [320, 640], // list thumbnail is 16rem wide, full width on phones
+      cover: [320, 640, 896, 1792], // list thumbnail (16rem, full width on phones) and the article's top
     },
   },
   works: { perItem: true, types: { cover: [480, 960] } },

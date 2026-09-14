@@ -56,7 +56,7 @@ Each article is a single file, `src/content/journal/<id>.mdx`. The `<id>` is the
 | --- | --- | --- |
 | `title` | yes | Article title |
 | `pubDate` | yes | Publication date. Lists are sorted by it |
-| `cover` | | Cover image name (such as `cover-a3f91c2b`), shown in the list. An empty or unknown name shows no thumbnail |
+| `cover` | | Cover image name (such as `cover-a3f91c2b`), shown in the list and at the top of the article. An empty or unknown name shows no image |
 | `draft` | | `true` excludes the article from production builds. It stays visible in development |
 
 Articles are MDX. Plain Markdown works unchanged, and these components are available without an import:
