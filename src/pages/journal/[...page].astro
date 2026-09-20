@@ -7,64 +7,23 @@ import Pager from '../../components/Pager.astro';
 import { optionalImage, SIZES } from '../../images';
 import { PER_PAGE } from '../../consts';
 
-// /journal/  /journal/2/  /journal/2026/  /journal/2026/2/
-// These never collide with article URLs: a year is four digits, an id ten.
+// /journal/  /journal/2/
 export async function getStaticPaths() {
   const posts = await listPosts();
-  const years = [...new Set(posts.map((post) => post.data.pubDate.getFullYear()))];
+  const count = Math.max(1, Math.ceil(posts.length / PER_PAGE));
+  const urls = Array.from({ length: count }, (_, i) => (i === 0 ? '/journal/' : `/journal/${i + 1}/`));
 
-  const pagesOf = (list: typeof posts, year?: number) => {
-    const base = year ? `/journal/${year}/` : '/journal/';
-    const count = Math.max(1, Math.ceil(list.length / PER_PAGE));
-    const urls = Array.from({ length: count }, (_, i) => (i === 0 ? base : `${base}${i + 1}/`));
-
-    return urls.map((_, i) => ({
-      params: { page: [year, i === 0 ? undefined : i + 1].filter(Boolean).join('/') || undefined },
-      props: {
-        posts: list.slice(i * PER_PAGE, (i + 1) * PER_PAGE),
-        total: list.length,
-        page: i + 1,
-        urls,
-        year,
-        years,
-      },
-    }));
-  };
-
-  return [
-    ...pagesOf(posts),
-    ...years.flatMap((year) =>
-      pagesOf(
-        posts.filter((post) => post.data.pubDate.getFullYear() === year),
-        year,
-      ),
-    ),
-  ];
+  return urls.map((_, i) => ({
+    params: { page: i === 0 ? undefined : String(i + 1) },
+    props: { posts: posts.slice(i * PER_PAGE, (i + 1) * PER_PAGE), total: posts.length, page: i + 1, urls },
+  }));
 }
 
-const { posts, total, page, urls, year, years } = Astro.props;
+const { posts, total, page, urls } = Astro.props;
 ---
 
 <BaseLayout title="Journal" description="これまでに書いた記事の一覧">
-  <PageHeader title="Journal" lead={`${total} 件の記事`}>
-    {
-      years.length > 0 && (
-        <details class="years">
-          <summary>{year ? `${year}年` : '全体'}</summary>
-          <nav aria-label="発行年でしぼりこむ">
-            <a href="/journal/" aria-current={year ? undefined : 'true'}>
-              全体
-            </a>
-            {years.map((y) => (
-              <a href={`/journal/${y}/`} aria-current={y === year ? 'true' : undefined}>
-                {y}年
-              </a>
-            ))}
-          </nav>
-        </details>
-      )
-    }
-  </PageHeader>
+  <PageHeader title="Journal" lead={`${total} 件の記事`} />
 
   {
     posts.length === 0 ? (
@@ -82,7 +41,7 @@ const { posts, total, page, urls, year, years } = Astro.props;
                     {post.data.draft && <span class="draft">下書き</span>}
                   </p>
 
-                  <h2 class="title">{post.data.title}</h2>
+                  <h2 class="entry-title">{post.data.title}</h2>
                 </div>
 
                 {cover && (
@@ -101,110 +60,24 @@ const { posts, total, page, urls, year, years } = Astro.props;
   <Pager page={page} urls={urls} />
 </BaseLayout>
 
-<script>
-  // A click anywhere outside closes the open pulldown.
-  const years = document.querySelector<HTMLDetailsElement>('.years');
-  document.addEventListener('click', (event) => {
-    if (years && !(event.target as Element).closest('.years')) years.open = false;
-  });
-</script>
-
 <style>
-  .years {
-    position: relative;
-    letter-spacing: 0.04em;
-  }
-
-  .years summary {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-    padding: 0.25em 0.7em;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .years summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .years summary:hover {
-    color: var(--text);
-  }
-
-  /* The chevron: two sides of a square, rotated */
-  .years summary::after {
-    content: '';
-    width: 0.45em;
-    height: 0.45em;
-    border-right: 1.5px solid currentColor;
-    border-bottom: 1.5px solid currentColor;
-    transform: translateY(-0.15em) rotate(45deg);
-  }
-
-  .years[open] summary::after {
-    transform: translateY(0.1em) rotate(225deg);
-  }
-
-  .years nav {
-    position: absolute;
-    z-index: 1;
-    top: calc(100% + 0.3rem);
-    left: 0;
-    min-width: 100%;
-    max-height: 60dvh;
-    overflow-y: auto;
-    padding: 0.4rem 0;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    box-shadow: var(--shadow);
-  }
-
-  .years nav a {
-    display: block;
-    padding: 0.3rem 0.9rem;
-    color: var(--text-muted);
-    text-decoration: none;
-    white-space: nowrap;
-  }
-
-  .years nav a:hover {
-    color: var(--text);
-  }
-
-  .years nav a[aria-current] {
-    color: var(--text);
-    font-weight: 600;
-  }
-
   .entry-list {
     margin: 0;
     padding: 0;
     list-style: none;
-    border-top: 1px solid var(--border);
+    border-top: var(--rule);
   }
 
   .entry-list > li {
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--rule);
   }
 
   .entry-link {
     display: flex;
-    gap: 1.25rem;
+    gap: var(--item-gap);
     align-items: flex-start;
-    padding: 1.75rem 0;
+    padding: var(--rule-gap) 0;
     text-decoration: none;
-  }
-
-  .entry-link:hover .title {
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: var(--underline);
-    text-underline-offset: 0.25em;
   }
 
   .thumb {
@@ -219,32 +92,23 @@ const { posts, total, page, urls, year, years } = Astro.props;
   .meta {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: var(--nav-gap);
     margin: 0;
     color: var(--text-muted);
-    letter-spacing: 0.04em;
-    line-height: 1.6;
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-heading);
   }
 
   .draft {
     padding: 0.05em 0.5em;
-    border: 1px solid var(--border);
-    border-radius: 999px;
+    border: var(--rule);
+    border-radius: var(--radius-pill);
     font-size: var(--fs-xs);
-  }
-
-  .title {
-    margin: 0.35rem 0 0;
-    font-size: var(--fs-md);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    line-height: 1.7;
   }
 
   @media (max-width: 32rem) {
     .entry-link {
       flex-direction: column;
-      gap: 0.9rem;
     }
 
     .thumb {

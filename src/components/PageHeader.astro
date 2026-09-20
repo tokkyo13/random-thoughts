@@ -22,22 +22,22 @@ const { title, lead } = Astro.props;
 
 <style>
   .page-header {
-    margin-bottom: clamp(2rem, 5vw, 3rem);
+    margin-bottom: var(--header-gap);
   }
 
   .page-title {
     margin: 0;
     font-size: var(--fs-xl);
     font-weight: 600;
-    letter-spacing: 0.08em;
-    line-height: 1.5;
+    letter-spacing: var(--ls-title);
+    line-height: var(--lh-title);
   }
 
   .page-lead-row {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-top: 0.75rem;
+    margin-top: var(--title-gap);
   }
 
   .page-lead {

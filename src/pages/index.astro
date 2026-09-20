@@ -13,7 +13,7 @@ const destinations = NAV_ITEMS.filter((item) => item.href !== "/");
   </div>
 
   <nav aria-label="メインメニュー">
-    <ul>
+    <ul class="nav-list">
       {
         destinations.map((item) => (
           <li>
@@ -26,12 +26,19 @@ const destinations = NAV_ITEMS.filter((item) => item.href !== "/");
 </BaseLayout>
 
 <style>
-  /* On this page only. It is the whole content, so it sits in the middle of the viewport */
+  /* On this page only. It is the whole content, so it centers across the page */
   :global(.site-main) {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
+  }
+
+  /* Too narrow for the side rails (see --frame-width in global.css), so nothing lines up
+     with the top any more and the page sits in the middle instead */
+  @media (max-width: 83rem) {
+    :global(.site-main) {
+      justify-content: center;
+    }
   }
 
   .brand :global(svg) {
@@ -45,20 +52,12 @@ const destinations = NAV_ITEMS.filter((item) => item.href !== "/");
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.6rem;
-    margin: 1.75rem 0 0;
-    padding: 0;
-    list-style: none;
+    gap: var(--nav-gap);
+    margin-top: var(--nav-offset);
   }
 
   a {
     display: block;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    text-decoration: none;
-  }
-
-  a:hover {
-    color: var(--text);
+    letter-spacing: var(--ls-wide);
   }
 </style>

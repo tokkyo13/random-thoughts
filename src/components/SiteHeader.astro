@@ -34,7 +34,7 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
         </a>
 
         <nav aria-label="メインメニュー">
-          <ul>
+          <ul class="nav-list">
             {
               railItems.map((item) => (
                 <li>
@@ -73,7 +73,7 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
 
           <div class="pane pane-nav">
             <nav aria-label="メインメニュー">
-              <ul>
+              <ul class="nav-list">
                 {
                   NAV_ITEMS.map((item) => (
                     <li>
@@ -93,10 +93,10 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
           {
             hasToc && (
               <div class="tabs">
-                <label for="pane-toc">
+                <label class="quiet" for="pane-toc">
                   <Toc />
                 </label>
-                <label for="pane-nav">
+                <label class="quiet" for="pane-nav">
                   <Menu />
                 </label>
               </div>
@@ -135,12 +135,17 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
 </script>
 
 <style>
+  /* Spans the viewport, so the dividing line runs its whole height; the padding puts the
+     logo back where --page-top wants it */
   .rail {
     position: fixed;
-    top: var(--page-top);
+    top: 0;
+    bottom: 0;
     /* Sits on the frame's left edge, as the article's TOC sits on its right */
     left: calc(50% - var(--frame-width) / 2);
     width: var(--rail-width);
+    padding-top: var(--page-top);
+    border-right: var(--rule);
   }
 
   .brand {
@@ -157,27 +162,19 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
   .rail ul {
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    margin: 1.75rem 0 0;
-    padding: 0;
-    list-style: none;
+    gap: var(--nav-gap);
+    margin-top: var(--nav-offset);
   }
 
+  /* The colors come from .nav-list in global.css; the line is this rail's own */
   .rail nav a {
     display: block;
     padding-left: var(--nav-indent);
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    text-decoration: none;
+    letter-spacing: var(--ls-wide);
     border-left: var(--underline) solid transparent;
   }
 
-  .rail nav a:hover {
-    color: var(--text);
-  }
-
   .rail nav a[aria-current='page'] {
-    color: var(--text);
     border-left-color: var(--accent);
   }
 
@@ -202,11 +199,11 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
     .menu summary {
       display: grid;
       place-items: center;
-      width: 2.75rem; /* 44px, a comfortable touch target */
-      height: 2.75rem;
+      width: var(--control-touch);
+      height: var(--control-touch);
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border: var(--rule);
+      border-radius: var(--radius-pill);
       cursor: pointer;
       list-style: none;
     }
@@ -216,8 +213,8 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
     }
 
     .menu summary :global(svg) {
-      width: 1.25rem;
-      height: 1.25rem;
+      width: var(--icon);
+      height: var(--icon);
       fill: currentColor;
     }
 
@@ -230,17 +227,16 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
     .panel {
       position: absolute;
       right: 0;
-      bottom: calc(100% + 0.6rem);
+      bottom: calc(100% + var(--nav-gap));
       display: flex;
       flex-direction: column;
-      width: max-content;
-      min-width: 11rem;
-      max-width: min(20rem, calc(100vw - var(--gutter) * 2));
+      /* One width whatever the pane holds, so switching tabs never resizes the panel */
+      width: min(15rem, calc(100vw - var(--gutter) * 2)); /* 240px */
       max-height: 60dvh;
       overflow: hidden; /* so the panes clip to the rounded corners */
       overscroll-behavior: contain;
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: var(--rule);
       border-radius: var(--radius);
     }
 
@@ -253,10 +249,10 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
       /* A wheel over the menu stays in the menu, and never runs on into the page */
       overscroll-behavior: contain;
       padding: 0.5rem 0;
-   
-      /* Ten rows at most. A row is a link line box (body line-height) plus its padding,
-         and the last term is this pane own padding; --panel keeps the short-screen guard */
-      max-height: calc((var(--fs-xs) * 1.9 + 1rem) * 10 + 1rem);
+
+      /* Ten rows at most. A row is a link line box plus its padding, and the last term is
+         this pane's own padding; the max-height above keeps the short-screen guard */
+      max-height: calc((var(--fs-base) * var(--lh-body) + 1rem) * 10 + 1rem);
     }
 
     .tabbed .pane {
@@ -268,27 +264,11 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
       display: flex;
     }
 
-    /* The TOC arrives through the slot, outside this component scope */
-    .panel :global(ul) {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
+    /* The TOC arrives through the slot, outside this component scope. Both lists carry
+       .nav-list, so global.css holds their reset and their colors */
     .panel :global(a) {
       display: block;
       padding: 0.5rem 1rem;
-      color: var(--text-muted);
-      text-decoration: none;
-    }
-
-    .panel :global(a:hover),
-    .panel :global(a[aria-current='page']) {
-      color: var(--text);
-    }
-
-    .pane-toc :global(a) {
-      font-size: var(--fs-xs);
     }
 
     /* The dark strip is the well the tabs sit in; only the open one lifts out of it */
@@ -302,15 +282,14 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
     .tabs label {
       display: grid;
       place-items: center;
-      padding: 0.5rem 0;
-      color: var(--text-muted);
+      height: var(--control);
       cursor: pointer;
       border-radius: 0 0 var(--radius) var(--radius);
     }
 
     .tabs label :global(svg) {
-      width: 1.25rem;
-      height: 1.25rem;
+      width: var(--icon);
+      height: var(--icon);
       fill: currentColor;
     }
 

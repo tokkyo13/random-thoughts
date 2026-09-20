@@ -32,6 +32,20 @@
   --fs-lg: 1.25rem; /* 20px */
   --fs-xl: 1.5rem; /* 24px */
 
+  /* Line height, by the role of the text it sets */
+  --lh-body: 1.9; /* running text */
+  --lh-relaxed: 1.8; /* a card's description */
+  --lh-snug: 1.7; /* list titles, the TOC, code */
+  --lh-heading: 1.6; /* headings and meta rows */
+  --lh-title: 1.5; /* a page title */
+  --lh-none: 1; /* a row carrying nothing but an icon */
+
+  /* Letter spacing. The larger the text, the more air it asks for */
+  --ls-prose: 0.02em;
+  --ls-body: 0.04em; /* titles, meta rows, controls */
+  --ls-wide: 0.06em; /* nav labels and an article title */
+  --ls-title: 0.08em; /* a page title */
+
   --measure: 56rem;
   --gutter: clamp(1.25rem, 5vw, 2.5rem);
   --page-width: calc(var(--measure) + var(--gutter) * 2);
@@ -50,12 +64,34 @@
   --frame-width: 83rem;
   /* For overlays that float above the page. The palette is dark, so plain black */
   --shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.35);
+  /* Corners, smallest first: inline marks, panels and controls, the avatar, and
+     anything round. --radius-pill turns a square into a circle, so round buttons read it */
+  --radius-sm: 3px;
   --radius: 4px;
+  --radius-lg: 1.2rem;
+  --radius-pill: 999px;
+  /* One line, everywhere the site divides anything */
+  --rule: 1px solid var(--border);
   --underline: 2px;
-  /* Between the line marking the current page and its label. Home has no line, so it
-     pads by this plus --underline and the two lay their labels out alike */
+  /* In the nav rail, between the line marking the current page and its label */
   --nav-indent: 0.85rem;
   --scrollbar: 0.9rem;
+
+  /* Spacing, named for what the gap separates. A measurement used in one place only
+     stays in that place */
+  --block-gap: 1.6em; /* between the blocks of an article */
+  --list-gap: 0.4em; /* between the rows of one list */
+  --nav-gap: 0.6rem; /* between nav rows */
+  --nav-offset: 1.75rem; /* the logo down to the first nav row */
+  --rule-gap: 1.75rem; /* between a rule and the content it divides */
+  --title-gap: 0.6rem; /* a title down to whatever follows it */
+  --item-gap: 1.25rem; /* between the parts of one item, and between the controls of one row */
+  --col-gap: 2rem; /* between blocks set side by side */
+  --section-gap: 2.5rem; /* before the part that closes a page */
+  --header-gap: clamp(2rem, 5vw, 3rem); /* a page or article header down to its body */
+  --icon: 1.25rem; /* an inline icon, square */
+  --control: 2rem; /* a square control under a pointer */
+  --control-touch: 2.75rem; /* 44px, the least a thumb can aim at */
 }
 
 /* =========================================================
@@ -80,7 +116,7 @@ body {
   color: var(--text);
   font-family: var(--font-main);
   font-size: var(--fs-base);
-  line-height: 1.9;
+  line-height: var(--lh-body);
   line-break: strict; /* Japanese kinsoku rules */
   overflow-wrap: anywhere;
   -webkit-font-smoothing: antialiased;
@@ -134,7 +170,7 @@ b {
    Prose (rendered Markdown)
    ========================================================= */
 .prose {
-  letter-spacing: 0.02em;
+  letter-spacing: var(--ls-prose);
 }
 
 .prose > :first-child {
@@ -146,8 +182,8 @@ b {
 .prose h3,
 .prose h4 {
   font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 1.6;
+  letter-spacing: var(--ls-body);
+  line-height: var(--lh-heading);
   margin: 2.75em 0 0.9em;
 }
 
@@ -155,7 +191,7 @@ b {
 .prose h1 {
   font-size: var(--fs-lg);
   padding-bottom: 0.4em;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--rule);
 }
 
 .prose h2 {
@@ -173,16 +209,16 @@ b {
 .prose blockquote,
 .prose figure,
 .prose table {
-  margin: 1.6em 0;
+  margin: var(--block-gap) 0;
 }
 
 .prose li + li {
-  margin-top: 0.4em;
+  margin-top: var(--list-gap);
 }
 
 /* A nested list takes the spacing between items, not a paragraph-sized gap */
 .prose li > :is(ul, ol) {
-  margin-block: 0.4em;
+  margin-block: var(--list-gap);
 }
 
 /* Task list checkboxes are disabled, and browsers grey out disabled controls whatever
@@ -195,7 +231,7 @@ b {
   margin: 0 0.3em 0 0;
   vertical-align: -0.15em;
   border: 1px solid var(--text-muted);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--code-bg); /* Firefox keeps its system field color otherwise */
 }
 
@@ -236,14 +272,14 @@ b {
 .prose hr {
   margin: 3em 0;
   border: 0;
-  border-top: 1px solid var(--border);
+  border-top: var(--rule);
 }
 
 .prose code {
   font-family: var(--font-mono);
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 3px;
+  border: var(--rule);
+  border-radius: var(--radius-sm);
   padding: 0.15em 0.4em;
 }
 
@@ -251,10 +287,10 @@ b {
   font-family: var(--font-mono);
   font-size: var(--fs-base); /* a bare monospace would otherwise shrink */
   padding: 1rem 1.15rem;
-  border: 1px solid var(--border);
+  border: var(--rule);
   border-radius: var(--radius);
   overflow-x: auto;
-  line-height: 1.7;
+  line-height: var(--lh-snug);
   overflow-wrap: normal; /* scroll instead of wrapping as body says */
 }
 
@@ -287,7 +323,7 @@ b {
   background: var(--border);
   border: 3px solid transparent;
   background-clip: padding-box;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .prose pre::-webkit-scrollbar-button {
@@ -304,7 +340,7 @@ b {
 .prose th,
 .prose td {
   padding: 0.6em 0.8em;
-  border: 1px solid var(--border);
+  border: var(--rule);
   text-align: left;
 }
 
@@ -333,4 +369,43 @@ b {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* A column of links: the nav rail, the home page, the menu panel, an article's TOC.
+   Each of them lays the column out itself; this is only what all four agree on */
+.nav-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Quiet until pointed at. Every nav link, tab and control on the site reads this,
+   through .nav-list or through the class itself */
+.nav-list a,
+.quiet {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.nav-list a:hover,
+.nav-list a[aria-current],
+.quiet:hover {
+  color: var(--text);
+}
+
+/* The title of one entry in a list */
+.entry-title {
+  margin: var(--title-gap) 0 0;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  letter-spacing: var(--ls-body);
+  line-height: var(--lh-snug);
+}
+
+/* A whole entry is one link, so pointing anywhere in it underlines the title */
+a:hover .entry-title {
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: var(--underline);
+  text-underline-offset: 0.25em;
 }

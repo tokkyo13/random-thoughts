@@ -13,7 +13,7 @@ const total = urls.length;
   total > 1 && (
     <nav class="pager" aria-label="ページ送り">
       {page > 1 ? (
-        <a class="step prev" href={urls[page - 2]} rel="prev" aria-label="前のページ" />
+        <a class="step prev quiet" href={urls[page - 2]} rel="prev" aria-label="前のページ" />
       ) : (
         <span class="step prev off" />
       )}
@@ -35,7 +35,7 @@ const total = urls.length;
       </form>
 
       {page < total ? (
-        <a class="step next" href={urls[page]} rel="next" aria-label="次のページ" />
+        <a class="step next quiet" href={urls[page]} rel="next" aria-label="次のページ" />
       ) : (
         <span class="step next off" />
       )}
@@ -57,15 +57,13 @@ const total = urls.length;
 
 <style>
   .pager {
-    --control: 2rem;
-
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 1.25rem;
-    margin-top: 2.5rem;
+    gap: var(--item-gap);
+    margin-top: var(--section-gap);
     color: var(--text-muted);
-    letter-spacing: 0.04em;
+    letter-spacing: var(--ls-body);
   }
 
   .step {
@@ -73,9 +71,8 @@ const total = urls.length;
     place-items: center;
     width: var(--control);
     height: var(--control);
-    border: 1px solid var(--border);
+    border: var(--rule);
     border-radius: var(--radius);
-    color: inherit;
   }
 
   /* The chevron: two sides of a square, rotated */
@@ -96,7 +93,6 @@ const total = urls.length;
   }
 
   a.step:hover {
-    color: var(--text);
     border-color: var(--text-muted);
   }
 
@@ -116,7 +112,7 @@ const total = urls.length;
     width: 3.5em;
     height: var(--control);
     padding: 0 0.5em;
-    border: 1px solid var(--border);
+    border: var(--rule);
     border-radius: var(--radius);
     background: var(--bg);
     color: var(--text);

@@ -14,7 +14,7 @@ const { file } = Astro.props;
 
 <style>
   .code {
-    margin: 1.6em 0;
+    margin: var(--block-gap) 0;
   }
 
   /* Specific enough to outweigh the margin Pre.astro gives the block */
@@ -30,15 +30,15 @@ const { file } = Astro.props;
     z-index: 1;
     margin-bottom: -1px;
     padding: 0.3em 1.5em;
-    border: 1px solid var(--border);
+    border: var(--rule);
     border-bottom: 0;
     border-radius: var(--radius) var(--radius) 0 0;
     background: var(--code-bg);
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: var(--fs-xs);
-    line-height: 1.7;
-    letter-spacing: 0.04em;
+    line-height: var(--lh-snug);
+    letter-spacing: var(--ls-body);
     overflow-x: auto;
     white-space: nowrap;
   }

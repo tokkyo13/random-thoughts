@@ -29,7 +29,7 @@ const cover = optionalImage(coverKey, 'eager');
     /* The same list the side TOC holds. It fills the menu where the margin is too narrow */
     toc.length > 0 && (
       <nav slot="toc" aria-label="目次">
-        <ul>
+        <ul class="nav-list">
           {toc.map((h) => (
             <li>
               <a href={`#${h.slug}`}>{h.text}</a>
@@ -66,7 +66,7 @@ const cover = optionalImage(coverKey, 'eager');
       toc.length > 0 && (
         <aside class="toc">
           <nav aria-label="目次">
-            <ul>
+            <ul class="nav-list">
               {toc.map((h) => (
                 <li>
                   <a href={`#${h.slug}`}>{h.text}</a>
@@ -80,7 +80,7 @@ const cover = optionalImage(coverKey, 'eager');
   </div>
 
   <nav class="post-nav">
-    <a href="/journal/">&larr; 記事一覧へ</a>
+    <a class="quiet" href="/journal/">&larr; 記事一覧へ</a>
   </nav>
 </BaseLayout>
 
@@ -94,34 +94,29 @@ const cover = optionalImage(coverKey, 'eager');
     margin-right: calc((var(--rail-width) + var(--rail-gap)) * -1);
   }
 
+  /* The line dividing the TOC from the article. It hangs off the layout, not off the TOC,
+     because it runs the height of the viewport and the TOC is only as tall as its list.
+     The nav rail carries the matching line on the other side */
+  .layout:has(.toc)::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: calc(50% + var(--frame-width) / 2 - var(--rail-width));
+    border-left: var(--rule);
+  }
+
   .toc {
     position: sticky;
     top: var(--page-top); /* level with the nav rail on the other side */
-    max-height: calc(100dvh - var(--page-top) - 2rem);
+    max-height: calc(100dvh - var(--page-top) * 2);
     overflow-y: auto;
-    font-size: var(--fs-xs);
-    line-height: 1.7;
-    border-left: 1px solid var(--border);
+    line-height: var(--lh-snug);
     padding-left: 1rem;
   }
 
-  .toc ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
   .toc li + li {
-    margin-top: 0.4rem;
-  }
-
-  .toc a {
-    color: var(--text-muted);
-    text-decoration: none;
-  }
-
-  .toc a:hover {
-    color: var(--text);
+    margin-top: var(--list-gap);
   }
 
   /* Nothing covers the top of the page any more, so a heading only needs breathing room */
@@ -139,42 +134,34 @@ const cover = optionalImage(coverKey, 'eager');
       margin-right: 0;
     }
 
-    .toc {
+    .toc,
+    .layout::after {
       display: none;
     }
   }
 
   .post-header {
-    margin-bottom: clamp(2rem, 5vw, 3rem);
+    margin-bottom: var(--header-gap);
   }
 
   .meta {
     margin: 0;
     color: var(--text-muted);
     font-size: var(--fs-xs);
-    letter-spacing: 0.04em;
+    letter-spacing: var(--ls-body);
   }
 
   .title {
-    margin: 0.5rem 0 0;
+    margin: var(--title-gap) 0 0;
     font-size: var(--fs-xl);
     font-weight: 600;
-    letter-spacing: 0.06em;
-    line-height: 1.6;
+    letter-spacing: var(--ls-wide);
+    line-height: var(--lh-heading);
   }
 
   .post-nav {
-    margin-top: 4rem;
-    padding-top: 1.75rem;
-    border-top: 1px solid var(--border);
-  }
-
-  .post-nav a {
-    color: var(--text-muted);
-    text-decoration: none;
-  }
-
-  .post-nav a:hover {
-    color: var(--text);
+    margin-top: var(--section-gap);
+    padding-top: var(--rule-gap);
+    border-top: var(--rule);
   }
 </style>

@@ -36,7 +36,7 @@ const { works, page, urls } = Astro.props;
             <li>
               <ExternalLink class="card" href={data.url}>
                 <div class="thumb">{cover && <img {...cover} sizes={SIZES.worksThumb} alt="" />}</div>
-                <h2 class="title">{data.title}</h2>
+                <h2 class="entry-title">{data.title}</h2>
                 <p class="description">{data.description}</p>
               </ExternalLink>
             </li>
@@ -51,10 +51,6 @@ const { works, page, urls } = Astro.props;
 
 <style>
   .work-grid {
-    --col-gap: 2rem;
-    --rule-gap: 2rem; /* between a row rule and the content on either side of it */
-    --rule: 1px solid var(--border);
-
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     column-gap: var(--col-gap);
@@ -102,24 +98,9 @@ const { works, page, urls } = Astro.props;
     text-decoration: none;
   }
 
-  .card:hover .title {
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: var(--underline);
-    text-underline-offset: 0.25em;
-  }
-
-  .title {
-    margin: 0.9rem 0 0;
-    font-size: var(--fs-md);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    line-height: 1.7;
-  }
-
   .description {
-    margin: 0.5rem 0 0;
+    margin: var(--title-gap) 0 0;
     color: var(--text-muted);
-    line-height: 1.8;
+    line-height: var(--lh-relaxed);
   }
 </style>

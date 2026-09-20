@@ -37,7 +37,7 @@ const { icon: Icon, label } = KINDS[type];
   .callout {
     --callout-color: var(--accent);
 
-    margin: 1.6em 0;
+    margin: var(--block-gap) 0;
     padding: 0.2em 0 0.2em 1.25em;
     border-left: 2px solid var(--callout-color);
   }
@@ -60,13 +60,13 @@ const { icon: Icon, label } = KINDS[type];
 
   .callout-mark {
     margin: 0 0 0.2em;
-    line-height: 1;
+    line-height: var(--lh-none);
     color: var(--callout-color);
   }
 
   .callout-mark :global(svg) {
-    width: 1.25rem;
-    height: 1.25rem;
+    width: var(--icon);
+    height: var(--icon);
     fill: currentColor;
   }
 
