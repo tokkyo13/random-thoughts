@@ -8,7 +8,6 @@
     "not_found_handling": "404-page"
   },
   "routes": [{ "pattern": "tokkyo13.net", "custom_domain": true }],
-  // tokkyo13.net is the only address; www is redirected to it by a Cloudflare Redirect Rule
   "workers_dev": false,
   "preview_urls": false
 }
