@@ -189,17 +189,19 @@ async function main() {
 }
 
 // For each perItem area in AREAS: item id -> the text to search for image names.
-const ITEM_SOURCES: Record<string, () => Map<string, string>> = {
-  journal: () =>
-    new Map(
-      fs.readdirSync('src/content/journal')
-        .filter((f) => f.endsWith('.mdx'))
-        .map((f) => [f.slice(0, -'.mdx'.length), read(`src/content/journal/${f}`)]),
-    ),
-  works: () =>
-    new Map((JSON.parse(read('src/content/works/works.json')) as { id: number }[]).map((w) => [String(w.id), JSON.stringify(w)])),
-};
+const mdxItems = (area: string) => () =>
+  new Map(
+    fs.readdirSync(`src/content/${area}`)
+      .filter((f) => f.endsWith('.mdx'))
+      .map((f) => [f.slice(0, -'.mdx'.length), read(`src/content/${area}/${f}`)]),
+  );
 
+const ITEM_SOURCES: Record<string, () => Map<string, string>> = {
+  journal: mdxItems('journal'),
+  picture: mdxItems('picture'),
+  work: () =>
+    new Map((JSON.parse(read('src/content/work/work.json')) as { id: number }[]).map((w) => [String(w.id), JSON.stringify(w)])),
+};
 async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncPlan) {
   if (plan.errors.length + plan.uploads.length + plan.repairs.length + plan.downloads.length > 0) {
     fail('Local and R2 are not in sync. Run "npm run img apply" first.');

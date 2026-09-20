@@ -24,6 +24,19 @@
         896,
         1792
       ]
+    },
+    "picture/1789937537/cover-e573fcbb": {
+      "ext": "png",
+      "width": 2388,
+      "height": 1343,
+      "size": 1261694,
+      "md5": "e573fcbb5fa91d54e2ac7be6a3aeb7e5",
+      "variants": [
+        640,
+        896,
+        1792,
+        2388
+      ]
     }
   }
 }

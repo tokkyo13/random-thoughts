@@ -23,6 +23,9 @@ export const shareKey = (key: string) =>
 
 type AreaSpec = {
   perItem: boolean; // one directory per item ("journal/<id>/") or one flat directory ("home/")
+  // Also keep a variant at the original width, whatever the list below says. It is what a page
+  // links to when it offers the image at full size; the private original is never public.
+  full?: boolean;
   // Variant widths per type. A new file whose name starts with no type gets the first one.
   // Editing a list affects only images uploaded afterwards.
   types: Record<string, number[]>;
@@ -37,7 +40,9 @@ export const AREAS: Record<string, AreaSpec> = {
       cover: [320, 640, 896, 1792], // list thumbnail (16rem, full width on phones) and the article's top
     },
   },
-  works: { perItem: true, types: { cover: [480, 960] } },
+  work: { perItem: true, types: { cover: [480, 960] } },
+  // The illustration itself, shown at the width of the prose column and linked at full size.
+  picture: { perItem: true, full: true, types: { cover: [640, 896, 1792] } },
   home: { perItem: false, types: { cover: [640, 1024, 1600] } },
 };
 

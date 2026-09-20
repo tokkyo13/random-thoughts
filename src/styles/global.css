@@ -352,7 +352,7 @@ b {
 /* =========================================================
    Shared parts
    ========================================================= */
-/* Journal and Works share these */
+/* Journal, Work and Picture share these */
 .entry-empty {
   color: var(--text-muted);
 }
@@ -369,6 +369,55 @@ b {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* A grid of cards, each one link: Work and Picture. The list sets the thumbnail's ratio */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: var(--col-gap);
+  row-gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Clips the rule above the first row and the overhang past the edge columns, so no
+     :nth-child cases per column count are needed.
+     Tradeoff: :focus-visible on the edge columns loses its outer side; if that matters,
+     drop overflow and cancel the edges with :nth-child per column count */
+  overflow: hidden;
+}
+
+/* Space below only, so each rule sits mid-gap above the next row */
+.card-grid > li {
+  position: relative;
+  padding-bottom: calc(var(--rule-gap) * 2);
+}
+
+/* Extends by half the column gap on each side, so neighboring rules join into one line */
+.card-grid > li::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--rule-gap) * -1);
+  left: calc(var(--col-gap) / -2);
+  right: calc(var(--col-gap) / -2);
+  border-top: var(--rule);
+}
+
+@media (max-width: 48rem) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 32rem) {
+  .card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  display: block;
+  text-decoration: none;
 }
 
 /* A column of links: the nav rail, the home page, the menu panel, an article's TOC.

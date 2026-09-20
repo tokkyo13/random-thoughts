@@ -42,5 +42,5 @@ export const optionalImage = (key: string | undefined, loading?: 'lazy' | 'eager
 export const SIZES = {
   prose: '(min-width: 61rem) 56rem, 100vw',
   journalThumb: '(max-width: 32rem) 100vw, 16rem', // stacks below 32rem
-  worksThumb: '(min-width: 61rem) 17.5rem, (min-width: 48rem) 33vw, (min-width: 32rem) 50vw, 100vw', // 3, 3, 2, 1 columns
+  gridThumb: '(min-width: 61rem) 17.5rem, (min-width: 48rem) 33vw, (min-width: 32rem) 50vw, 100vw', // .card-grid: 3, 3, 2, 1 columns
 };

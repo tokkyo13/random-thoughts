@@ -1,0 +1,58 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import Pager from '../../components/Pager.astro';
+import ExternalLink from '../../components/ExternalLink.astro';
+import { optionalImage, SIZES } from '../../images';
+import { PER_PAGE } from '../../consts';
+
+// /work/  /work/2/
+export async function getStaticPaths() {
+  const entries = await getCollection('work');
+  const count = Math.max(1, Math.ceil(entries.length / PER_PAGE));
+  const urls = Array.from({ length: count }, (_, i) => (i === 0 ? '/work/' : `/work/${i + 1}/`));
+
+  return urls.map((_, i) => ({
+    params: { page: i === 0 ? undefined : String(i + 1) },
+    props: { entries: entries.slice(i * PER_PAGE, (i + 1) * PER_PAGE), page: i + 1, urls },
+  }));
+}
+
+const { entries, page, urls } = Astro.props;
+---
+
+<BaseLayout title="Work" description="公開している web アプリなどの一覧">
+  <PageHeader title="Work" lead="作ったもの" />
+
+  {
+    entries.length === 0 ? (
+      <p class="entry-empty">まだ登録がありません</p>
+    ) : (
+      <ul class="card-grid">
+        {entries.map(({ id, data }) => {
+          const cover = optionalImage(data.cover && `work/${id}/${data.cover}`);
+          return (
+            <li>
+              <ExternalLink class="card" href={data.url}>
+                <div class="thumb">{cover && <img {...cover} sizes={SIZES.gridThumb} alt="" />}</div>
+                <h2 class="entry-title">{data.title}</h2>
+                <p class="description">{data.description}</p>
+              </ExternalLink>
+            </li>
+          );
+        })}
+      </ul>
+    )
+  }
+
+  <Pager page={page} urls={urls} />
+</BaseLayout>
+
+<style>
+  .description {
+    margin: var(--title-gap) 0 0;
+    color: var(--text-muted);
+    line-height: var(--lh-relaxed);
+  }
+</style>

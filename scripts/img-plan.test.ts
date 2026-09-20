@@ -47,8 +47,8 @@ test('editing a file in place makes a new image and leaves the old one', () => {
 });
 
 test('areas with one type give every file that type', () => {
-  const p = planSync([file('works/1789139901', 'thumb.png'), file('home', 'figure.jpg')], { images: {} }, new Map());
-  assert.deepEqual(p.uploads.map((u) => `${u.dir}/${u.stem}`), ['home/cover-a1b2c3d4', 'works/1789139901/cover-a1b2c3d4']);
+  const p = planSync([file('work/1789139901', 'thumb.png'), file('home', 'figure.jpg')], { images: {} }, new Map());
+  assert.deepEqual(p.uploads.map((u) => `${u.dir}/${u.stem}`), ['home/cover-a1b2c3d4', 'work/1789139901/cover-a1b2c3d4']);
 });
 
 test('a synced image needs nothing', () => {
@@ -85,12 +85,12 @@ test('bad locations and formats are errors, never uploads', () => {
 
 test('gc deletes only what nothing references, and says why', () => {
   const images = Object.fromEntries(
-    [`${J}/figure-a1b2c3d4`, `${J}/figure-ffff0000`, 'journal/1789000000/cover-a1b2c3d4', 'home/cover-a1b2c3d4', 'works/1789139901/cover-a1b2c3d4']
+    [`${J}/figure-a1b2c3d4`, `${J}/figure-ffff0000`, 'journal/1789000000/cover-a1b2c3d4', 'home/cover-a1b2c3d4', 'work/1789139901/cover-a1b2c3d4']
       .map((k) => [k, entry]),
   );
   const items = {
     journal: new Map([['1789139909', '<Fig src="figure-a1b2c3d4" />']]),
-    works: new Map([['1789139901', JSON.stringify({ id: 1789139901, cover: 'cover-a1b2c3d4' })]]),
+    work: new Map([['1789139901', JSON.stringify({ id: 1789139901, cover: 'cover-a1b2c3d4' })]]),
   };
   const refs = collectRefs(items, ["image('home/cover-a1b2c3d4')"]);
   assert.deepEqual(planGc({ images }, refs, items), [
@@ -102,4 +102,11 @@ test('gc deletes only what nothing references, and says why', () => {
 test('variant widths never exceed the original', () => {
   assert.deepEqual(variantWidths(J, 'figure', 1000), [448, 896]);
   assert.deepEqual(variantWidths(J, 'figure', 300), [300]);
+});
+
+test('a full area also keeps the original width, and never twice', () => {
+  const P = 'picture/1789139909';
+  assert.deepEqual(variantWidths(P, 'cover', 2400), [640, 896, 1792, 2400]);
+  assert.deepEqual(variantWidths(P, 'cover', 1792), [640, 896, 1792]);
+  assert.deepEqual(variantWidths(P, 'cover', 500), [500]);
 });

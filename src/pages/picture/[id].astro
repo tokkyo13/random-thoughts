@@ -1,0 +1,102 @@
+---
+import { render } from 'astro:content';
+import { listPictures } from '../../pictures';
+import { optionalImage, shareImage, SIZES } from '../../images';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import ExternalLink from '../../components/ExternalLink.astro';
+import Note from '../../components/Note.astro';
+import ProseLink from '../../components/ProseLink.astro';
+import Code from '../../components/Code.astro';
+import Pre from '../../components/Pre.astro';
+
+export async function getStaticPaths() {
+  return (await listPictures()).map((picture) => ({
+    params: { id: picture.id },
+    props: { picture },
+  }));
+}
+
+const { picture } = Astro.props;
+const { Content } = await render(picture);
+const coverKey = picture.data.cover && `picture/${picture.id}/${picture.data.cover}`;
+const cover = optionalImage(coverKey, 'eager');
+// The body is the description, and it is optional; an empty one leaves the gap out
+const hasDescription = Boolean(picture.body?.trim());
+---
+
+<BaseLayout title={picture.data.title} image={shareImage(coverKey)}>
+  <article>
+    {
+      /* The largest variant is as wide as the original. The original itself stays private:
+         it carries the metadata the variants are stripped of */
+      cover ? (
+        <ExternalLink class="full" href={cover.src}>
+          <img {...cover} sizes={SIZES.prose} fetchpriority="high" alt={picture.data.title} />
+        </ExternalLink>
+      ) : (
+        <div class="thumb" />
+      )
+    }
+
+    <header class="picture-header">
+      <p class="meta">
+        <FormattedDate date={picture.data.pubDate} />
+      </p>
+
+      <h1 class="title">{picture.data.title}</h1>
+    </header>
+
+    {
+      hasDescription && (
+        <div class="prose">
+          <Content components={{ Note, Code, pre: Pre, a: ProseLink }} />
+        </div>
+      )
+    }
+  </article>
+
+  <nav class="picture-nav">
+    <a class="quiet" href="/picture/">&larr; イラスト一覧へ</a>
+  </nav>
+</BaseLayout>
+
+<style>
+  /* The illustration keeps its own proportions at the width of the column, so a tall one
+     runs past the fold; the full size opens in a tab of its own */
+  .full img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+
+  .picture-header {
+    margin-top: var(--item-gap);
+  }
+
+  .meta {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: var(--fs-xs);
+    letter-spacing: var(--ls-body);
+  }
+
+  .title {
+    margin: var(--title-gap) 0 0;
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    letter-spacing: var(--ls-wide);
+    line-height: var(--lh-heading);
+  }
+
+  .prose {
+    margin-top: var(--item-gap);
+  }
+
+  .picture-nav {
+    margin-top: var(--section-gap);
+    padding-top: var(--rule-gap);
+    border-top: var(--rule);
+  }
+</style>

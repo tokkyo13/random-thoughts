@@ -24,7 +24,7 @@ export type SyncPlan = {
 
 export type Deletion = { key: string; reason: string };
 
-/** Per-item area -> item id -> the item's text (an article's source, a works entry as JSON). */
+/** Per-item area -> item id -> the item's text (an article's source, a work entry as JSON). */
 export type Items = Record<string, Map<string, string>>;
 
 /** "journal/1789139909/figure-a3f91c2b" -> ["journal/1789139909", "figure-a3f91c2b"] */
@@ -41,7 +41,11 @@ export function areaOf(dir: string): string | undefined {
 const typesOf = (dir: string) => Object.keys(AREAS[areaOf(dir)!].types);
 
 export function variantWidths(dir: string, type: string, width: number): number[] {
-  const fits = (AREAS[areaOf(dir)!].types[type] ?? []).filter((w) => w <= width);
+  const area = AREAS[areaOf(dir)!];
+  const fits = (area.types[type] ?? []).filter((w) => w <= width);
+  // width is at least every fit, so it stays in ascending order. A full area therefore always
+  // has a variant, and the fallback below is for the other areas.
+  if (area.full && !fits.includes(width)) fits.push(width);
   return fits.length > 0 ? fits : [width];
 }
 

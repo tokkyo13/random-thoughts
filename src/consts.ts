@@ -11,10 +11,11 @@ export const JOURNAL_FEED_TITLE = `Journal | ${SITE_TITLE}`;
 export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'Journal', href: '/journal/' },
-  { label: 'Works', href: '/works/' },
-  { label: 'Links', href: '/links/' },
+  { label: 'Picture', href: '/picture/' },
+  { label: 'Work', href: '/work/' },
+  { label: 'Link', href: '/link/' },
   { label: 'About', href: '/about/' },
 ] as const;
 
-// Entries per list page, in Journal and Works. It caps the thumbnails one page loads.
+// Entries per list page, in Journal, Work and Picture. It caps the thumbnails one page loads.
 export const PER_PAGE = 30;

@@ -18,7 +18,8 @@ Images are kept out of Git. Originals and their web variants live in Cloudflare 
 | `npm run preview` | Serve the build locally |
 | `npm test` | Run the unit tests (`scripts/**/*.test.ts`) |
 | `npm run new journal` | Create a draft article |
-| `npm run new works` | Append a works entry |
+| `npm run new picture` | Create a picture entry |
+| `npm run new work` | Append a work entry |
 | `npm run img plan` | Show what `apply` would do |
 | `npm run img apply` | Sync images between `r2-clone/` and R2. Never deletes anything |
 | `npm run img gc` | Delete images that nothing refers to, after confirmation |
@@ -29,7 +30,8 @@ Images are kept out of Git. Originals and their web variants live in Cloudflare 
 src/
   components/         Fig, Note and Code (available in articles), PageHeader, ExternalLink, ...
   content/journal/    articles, one <id>.mdx each
-  content/works/      works.json, the works entries in display order
+  content/picture/    illustrations, one <id>.mdx each
+  content/work/       work.json, the work entries in display order
   layouts/  pages/  styles/
   consts.ts           site-wide constants
   content.config.ts   content schemas
@@ -39,7 +41,7 @@ src/
 scripts/
   img.ts              image sync tool (file system and R2 access)
   img-plan.ts         its pure planning logic, tested by img-plan.test.ts
-  new.ts              creates articles and works entries
+  new.ts              creates articles, picture entries and work entries
 creds/                r2.env (not in Git) and its template
 r2-clone/             local copy of the original images, not in Git
 ```
@@ -84,17 +86,29 @@ Links written in an article open in a new tab, so the article is never left behi
 
 MDX differs from Markdown in a few places: autolinks (`<https://...>`) and indented code blocks are not supported, comments are written as `{/* ... */}`, HTML tags must be closed (`<br />`), and a literal `{` must be escaped as `\{`.
 
-### Works
+### Work
 
-`src/content/works/works.json` is an array of entries, shown in array order:
+`src/content/work/work.json` is an array of entries, shown in array order:
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `id` | yes | Unix time in seconds; also names the image directory `r2-clone/works/<id>/` |
+| `id` | yes | Unix time in seconds; also names the image directory `r2-clone/work/<id>/` |
 | `title` | yes | Name of the work |
 | `description` | yes | One or two sentences |
 | `url` | yes | Where the work is published |
 | `cover` | | Cover image name, such as `cover-a3f91c2b`. An empty or unknown name shows an empty frame |
+
+### Picture
+
+Each illustration is a single file, `src/content/picture/<id>.mdx`, named and numbered like an article. The list at `/picture/` shows a square thumbnail cropped from the center; the page at `/picture/<id>/` shows the illustration at the width of the text column, and links it at full size.
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `title` | yes | Title of the illustration |
+| `pubDate` | yes | Publication date. The list is sorted by it, newest first |
+| `cover` | yes | The illustration itself, such as `cover-a3f91c2b`. An empty or unknown name shows an empty frame, so the entry can be written before the image is uploaded |
+
+The body of the file is the description, shown under the title. It may be left empty, and is MDX like an article, except that `Fig` is not available: the page carries one illustration and no others.
 
 ## Images
 
@@ -106,7 +120,8 @@ Images are grouped into areas, defined in one table (`AREAS` in `src/images/conf
 | --- | --- | --- |
 | home | `home/` | `cover` |
 | journal | `journal/<id>/` | `figure`, `cover` |
-| works | `works/<id>/` | `cover` |
+| picture | `picture/<id>/` | `cover` |
+| work | `work/<id>/` | `cover` |
 
 
 Every image is named `<type>-<hash>`, such as `figure-a3f91c2b`, where the hash is the first eight hex digits of the MD5 of the original. The sync tool derives the name from the file itself, so nothing has to be reserved in advance: uploading the same picture twice, whether as a preview or after a detour, always lands on the same name. References never include the file extension.
@@ -114,7 +129,7 @@ Every image is named `<type>-<hash>`, such as `figure-a3f91c2b`, where the hash 
 ### Storage
 
 - **Originals** go to a private bucket under `<dir>/<name>.<ext>`. They are stored unchanged, metadata included, which is why the bucket stays private.
-- **Variants** go to a public bucket under `<dir>/<name>.<width>w.avif` and are served from the image origin. They are generated locally with sharp as AVIF, carry no metadata, and are never wider than the original. The widths depend on the area and type.
+- **Variants** go to a public bucket under `<dir>/<name>.<width>w.avif` and are served from the image origin. They are generated locally with sharp as AVIF, carry no metadata, and are never wider than the original. The widths depend on the area and type. An area marked `full` also gets a variant at the width of the original: it is what a page links to when it offers the image at full size, the original itself staying private.
 - **Share images** go to the same public bucket under `<dir>/<name>.share.jpg`. Only covers get one, and only a link preview ever fetches it: the scrapers behind them do not read AVIF, so this is a small JPEG instead. It is not referenced by any page, so a reader never downloads it.
 - Both are uploaded with `Cache-Control: public, max-age=31536000, immutable`. Because the name follows from the content, a name can never point at different bytes, and cached copies never go stale.
 - `src/images/manifest.json` records the dimensions, MD5 hash and variant widths of every image. The site build reads only this file and never contacts R2.
@@ -123,7 +138,7 @@ Every image is named `<type>-<hash>`, such as `figure-a3f91c2b`, where the hash 
 
 1. Put images in the item's directory under `r2-clone/`, with any file name. A name starting with a type, such as `cover.jpg`, selects that type; other files get the area's first type.
 2. Run `npm run img plan` to see the names that will be assigned, then `npm run img apply` to rename the files, upload originals and variants, and update the manifest.
-3. Reference images by name: `<Fig src="figure-a3f91c2b" />` in an article, `cover: cover-a3f91c2b` in frontmatter or a works entry, or a full key such as `image('home/cover-a3f91c2b')` in a page.
+3. Reference images by name: `<Fig src="figure-a3f91c2b" />` in an article, `cover: cover-a3f91c2b` in frontmatter or a work entry, or a full key such as `image('home/cover-a3f91c2b')` in a page.
 4. Commit `src/images/manifest.json` together with the content that uses the images.
 
 To replace an image, add the new version (it gets a new name), update the references, and remove the old one with `gc`. Images are never overwritten in place. Editing a file in `r2-clone/` in place amounts to the same thing: its content gives it a new name, and the previous version is restored beside it from R2.
@@ -139,7 +154,7 @@ To replace an image, add the new version (it gets a new name), update the refere
 | In both, same content | Nothing |
 | In the manifest, objects missing in R2 | Re-upload from the local copy if it matches, otherwise report an error |
 
-`gc` runs only when everything is in sync. It deletes, from both buckets and from `r2-clone/`, every image whose key appears nowhere: not in any article or works entry, and not in any source file under `src/`. Images of deleted articles or entries are included. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
+`gc` runs only when everything is in sync. It deletes, from both buckets and from `r2-clone/`, every image whose key appears nowhere: not in any article, picture or work entry, and not in any source file under `src/`. Images of deleted articles or entries are included. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
 
 ### Adding an area
 
