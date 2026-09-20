@@ -1,17 +1,5 @@
 {
   "images": {
-    "home/cover-2b0dd78b": {
-      "ext": "jpg",
-      "width": 2560,
-      "height": 1920,
-      "size": 1901225,
-      "md5": "2b0dd78bd55f2c5f2410825af143e68a",
-      "variants": [
-        640,
-        1024,
-        1600
-      ]
-    },
     "journal/1789204809/cover-e5a86357": {
       "ext": "png",
       "width": 1920,

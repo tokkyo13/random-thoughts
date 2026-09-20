@@ -35,9 +35,9 @@
   --measure: 56rem;
   --gutter: clamp(1.25rem, 5vw, 2.5rem);
   --page-width: calc(var(--measure) + var(--gutter) * 2);
-  /* The site logo, in the rail and on the home page. 3vw reaches the cap at --frame-width,
-     so the rail always shows it at full size and only the home page scales it */
-  --logo-height: clamp(1.6rem, 3vw, 2.5rem);
+  /* The site logo, in the rail and on the home page. Paired with --fs-base text in both,
+     so the two lay out to the same proportion */
+  --logo-height: 2.5rem;
   /* Where the content starts. The nav rail and an article's TOC share it, so the three line up.
      It follows --gutter, so the margin above the content matches the one beside it */
   --page-top: var(--gutter);
@@ -52,6 +52,9 @@
   --shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.35);
   --radius: 4px;
   --underline: 2px;
+  /* Between the line marking the current page and its label. Home has no line, so it
+     pads by this plus --underline and the two lay their labels out alike */
+  --nav-indent: 0.85rem;
   --scrollbar: 0.9rem;
 }
 

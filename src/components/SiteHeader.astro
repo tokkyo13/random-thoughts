@@ -16,58 +16,27 @@ const path = Astro.url.pathname;
 // A prefix match, so an article page (/journal/<id>/) marks Journal as current.
 // Home is the exception: '/' is a prefix of everything
 const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+
+// Home lays the same links out as its own content, so it needs neither rail nor button
+const isHome = path === '/';
+
+// The rail shows the logo, and that is the way home. The panel has no logo, so it lists Home
+const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
 ---
 
-<header>
-  {/* Wide viewports: a rail in the left margin, the twin of an article's TOC on the right */}
-  <div class="rail">
-    <div class="brand" role="img" aria-label={SITE_TITLE}>
-      <Logo />
-    </div>
+{
+  !isHome && (
+    <header>
+      {/* Wide viewports: a rail in the left margin, the twin of an article's TOC on the right */}
+      <div class="rail">
+        <a class="brand" href="/" aria-label={SITE_TITLE}>
+          <Logo />
+        </a>
 
-    <nav aria-label="メインメニュー">
-      <ul>
-        {
-          NAV_ITEMS.map((item) => (
-            <li>
-              <a
-                href={item.href}
-                aria-current={isCurrent(item.href) ? 'page' : undefined}
-              >
-                {item.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-    </nav>
-  </div>
-
-  {/* Narrow viewports: the same links behind one button, kept within thumb reach */}
-  <details class="menu">
-    <summary aria-label="メニュー">
-      <Add />
-    </summary>
-
-    <div class:list={['panel', { tabbed: hasToc }]}>
-      {
-        hasToc && (
-          <Fragment>
-            <input class="visually-hidden" type="radio" name="pane" id="pane-toc" aria-label="目次" checked />
-            <input class="visually-hidden" type="radio" name="pane" id="pane-nav" aria-label="メニュー" />
-
-            <div class="pane pane-toc">
-              <slot name="toc" />
-            </div>
-          </Fragment>
-        )
-      }
-
-      <div class="pane pane-nav">
         <nav aria-label="メインメニュー">
           <ul>
             {
-              NAV_ITEMS.map((item) => (
+              railItems.map((item) => (
                 <li>
                   <a
                     href={item.href}
@@ -82,21 +51,62 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
         </nav>
       </div>
 
-      {
-        hasToc && (
-          <div class="tabs">
-            <label for="pane-toc">
-              <Toc />
-            </label>
-            <label for="pane-nav">
-              <Menu />
-            </label>
+      {/* Narrow viewports: the same links behind one button, kept within thumb reach */}
+      <details class="menu">
+        <summary aria-label="メニュー">
+          <Add />
+        </summary>
+
+        <div class:list={['panel', { tabbed: hasToc }]}>
+          {
+            hasToc && (
+              <Fragment>
+                <input class="visually-hidden" type="radio" name="pane" id="pane-toc" aria-label="目次" checked />
+                <input class="visually-hidden" type="radio" name="pane" id="pane-nav" aria-label="メニュー" />
+
+                <div class="pane pane-toc">
+                  <slot name="toc" />
+                </div>
+              </Fragment>
+            )
+          }
+
+          <div class="pane pane-nav">
+            <nav aria-label="メインメニュー">
+              <ul>
+                {
+                  NAV_ITEMS.map((item) => (
+                    <li>
+                      <a
+                        href={item.href}
+                        aria-current={isCurrent(item.href) ? 'page' : undefined}
+                      >
+                        {item.label}
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
+            </nav>
           </div>
-        )
-      }
-    </div>
-  </details>
-</header>
+
+          {
+            hasToc && (
+              <div class="tabs">
+                <label for="pane-toc">
+                  <Toc />
+                </label>
+                <label for="pane-nav">
+                  <Menu />
+                </label>
+              </div>
+            )
+          }
+        </div>
+      </details>
+    </header>
+  )
+}
 
 <script>
   const menu = document.querySelector<HTMLDetailsElement>('.menu');
@@ -135,6 +145,7 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
 
   .brand {
     display: flex;
+    text-decoration: none;
   }
 
   .brand :global(svg) {
@@ -154,7 +165,7 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
 
   .rail nav a {
     display: block;
-    padding-left: 0.85rem;
+    padding-left: var(--nav-indent);
     letter-spacing: 0.06em;
     color: var(--text-muted);
     text-decoration: none;
@@ -195,7 +206,7 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
       height: 2.75rem;
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 999px;
+      border-radius: var(--radius);
       cursor: pointer;
       list-style: none;
     }
@@ -208,7 +219,6 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
       width: 1.25rem;
       height: 1.25rem;
       fill: currentColor;
-      transition: transform 0.15s;
     }
 
     /* A plus turned an eighth of a turn is a cross */
