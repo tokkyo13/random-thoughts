@@ -170,6 +170,16 @@ The rule does not cover every shell command, so do not ask the agent to read the
 
 The site is served by Cloudflare Workers as static assets, with no Worker script. `wrangler.jsonc` holds the whole configuration: the asset directory, `dist/404.html` for unknown paths, and `tokkyo13.net` as the only address. Workers Builds deploys every push to `main` by running `npm run build`, then `npx wrangler deploy`. The build needs no credentials.
 
+### Response headers
+
+`public/_headers` is copied into `dist/` by the build, read by Cloudflare and never served. It carries two rules.
+
+Every response gets `Referrer-Policy: no-referrer`, so a link leaving the site carries nothing about where the reader came from, and `X-Content-Type-Options: nosniff`.
+
+`/_astro/*` is marked `immutable`. Those names contain a content hash, but Cloudflare serves assets as `max-age=0, must-revalidate` by default, so without the rule even a hashed file is revalidated on every page view. Because the rule removes that cost, stylesheets are left external (`build.inlineStylesheets: 'never'`): they are fetched once instead of being carried inside every page.
+
+Nothing about visitors is collected: no cookies, no analytics beacon, and no request log of our own. Nothing is loaded from a third party either, since fonts and icons are inlined at build time and images come from the site's own image origin. There is no Content-Security-Policy; with no third party to shut out, it only stood in the way of ordinary markup.
+
 ## Third-party assets
 
 Work by others that is checked into this repository. Each one keeps its license text beside it. Everything is inlined at build time; no font or icon service is loaded at runtime.

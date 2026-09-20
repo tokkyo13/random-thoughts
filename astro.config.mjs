@@ -5,8 +5,9 @@ import mdx from '@astrojs/mdx';
 export default defineConfig({
   site: 'https://tokkyo13.net', // absolute URLs in the feed
   integrations: [mdx()],
-  // No stylesheet requests: hashed files would still be revalidated on every page view
-  build: { inlineStylesheets: 'always' },
+  // Stylesheets stay external: public/_headers marks /_astro/* immutable, so they are
+  // fetched once instead of being carried inside every page
+  build: { inlineStylesheets: 'never' },
   prefetch: { prefetchAll: true }, // on hover or focus
   markdown: {
     shikiConfig: { theme: 'nord' },

@@ -1,0 +1,12 @@
+# Response headers for the static assets. Cloudflare parses this file and applies
+# the rules; the file itself is never served.
+# https://developers.cloudflare.com/workers/static-assets/headers/
+
+/*
+  Referrer-Policy: no-referrer
+  X-Content-Type-Options: nosniff
+
+# A hashed name always stands for the same bytes, so it never has to be revalidated.
+# Without this rule Cloudflare serves assets as max-age=0, must-revalidate.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
