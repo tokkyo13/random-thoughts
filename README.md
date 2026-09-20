@@ -115,6 +115,7 @@ Every image is named `<type>-<hash>`, such as `figure-a3f91c2b`, where the hash 
 
 - **Originals** go to a private bucket under `<dir>/<name>.<ext>`. They are stored unchanged, metadata included, which is why the bucket stays private.
 - **Variants** go to a public bucket under `<dir>/<name>.<width>w.avif` and are served from the image origin. They are generated locally with sharp as AVIF, carry no metadata, and are never wider than the original. The widths depend on the area and type.
+- **Share images** go to the same public bucket under `<dir>/<name>.share.jpg`. Only covers get one, and only a link preview ever fetches it: the scrapers behind them do not read AVIF, so this is a small JPEG instead. It is not referenced by any page, so a reader never downloads it.
 - Both are uploaded with `Cache-Control: public, max-age=31536000, immutable`. Because the name follows from the content, a name can never point at different bytes, and cached copies never go stale.
 - `src/images/manifest.json` records the dimensions, MD5 hash and variant widths of every image. The site build reads only this file and never contacts R2.
 

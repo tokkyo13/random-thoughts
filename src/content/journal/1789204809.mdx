@@ -12,6 +12,7 @@ Journal の記事は MDX で書いている（つまり、この記事も）。M
 ````mdx
 ---
 title: 'Ethica'
+description: 'ordine geometrico demonstrata'
 pubDate: 1677-02-21
 cover: cover-d2eb53f3
 draft: true
@@ -19,6 +20,8 @@ draft: true
 ````
 
 必須は `title` と `pubDate` のみ。`draft: true` の間は本番のビルドから外れ、開発サーバーでだけ見える。`cover` には一覧のサムネイルと記事の先頭に出す画像の名前を拡張子なしで書く。画像は空のままでもエラーにはならず、画像が出ないだけ。
+
+`description` は記事の要約。検索結果と、SNS でリンクを共有したときのカードに使われ、RSS の各項目にも同じ文が入る。書かなければ、そのどれにも出力されない。
 
 # コメント
 

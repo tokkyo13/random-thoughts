@@ -1,7 +1,7 @@
 ---
 import { render } from 'astro:content';
 import { listPosts } from '../../posts';
-import { optionalImage, SIZES } from '../../images';
+import { optionalImage, shareImage, SIZES } from '../../images';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Fig from '../../components/Fig.astro';
@@ -20,10 +20,11 @@ export async function getStaticPaths() {
 const { post } = Astro.props;
 const { Content, headings } = await render(post);
 const toc = headings.filter((h) => h.depth === 1);
-const cover = optionalImage(post.data.cover && `journal/${post.id}/${post.data.cover}`, 'eager');
+const coverKey = post.data.cover && `journal/${post.id}/${post.data.cover}`;
+const cover = optionalImage(coverKey, 'eager');
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description} image={cover?.src}>
+<BaseLayout title={post.data.title} description={post.data.description} image={shareImage(coverKey)}>
   {
     /* The same list the side TOC holds. It fills the menu where the margin is too narrow */
     toc.length > 0 && (

@@ -15,7 +15,8 @@ const journal = defineCollection({
     pubDate: z.coerce.date(),
     cover: cover.optional(),
     draft: z.boolean().default(false),
-  }),
+    // strict, so a misspelt key fails the build instead of being dropped in silence
+  }).strict(),
 });
 
 // Array order is display order.

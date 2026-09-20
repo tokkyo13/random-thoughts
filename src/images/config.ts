@@ -12,6 +12,15 @@ export const NAME_HASH = 8;
 // Changing the format renames every variant; "npm run img apply" then regenerates them.
 export const variantKey = (key: string, width: number) => `${key}.${width}w.avif`;
 
+// A link preview needs a format every scraper reads, and AVIF is not one. Covers carry one extra
+// JPEG for that. Only scrapers ever fetch it, so it is small and costs a reader nothing.
+export const SHARE_TYPE = 'cover';
+export const SHARE_WIDTH = 640;
+
+/** The share key for a cover, or undefined for any other type. */
+export const shareKey = (key: string) =>
+  key.slice(key.lastIndexOf('/') + 1).startsWith(`${SHARE_TYPE}-`) ? `${key}.share.jpg` : undefined;
+
 type AreaSpec = {
   perItem: boolean; // one directory per item ("journal/<id>/") or one flat directory ("home/")
   // Variant widths per type. A new file whose name starts with no type gets the first one.

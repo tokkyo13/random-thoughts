@@ -1,5 +1,5 @@
 import manifest from './manifest.json';
-import { IMAGE_ORIGIN, variantKey, type Manifest } from './config';
+import { IMAGE_ORIGIN, shareKey, variantKey, type Manifest } from './config';
 
 const { images } = manifest as Manifest;
 
@@ -22,6 +22,16 @@ export function image(key: string, loading: 'lazy' | 'eager' = 'lazy') {
     loading,
     decoding: 'async' as const,
   };
+}
+
+/**
+ * Absolute URL of the JPEG a link preview should show. Undefined unless the key names a cover,
+ * since those are the only images that carry one.
+ */
+export function shareImage(key: string | undefined): string | undefined {
+  if (!key || !images[key]) return undefined;
+  const share = shareKey(key);
+  return share && `${IMAGE_ORIGIN}/${share}`;
 }
 
 /** Like image(), but undefined for an empty or unknown key, so a list shows its empty frame. */

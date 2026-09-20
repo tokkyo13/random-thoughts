@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import readline from 'node:readline/promises';
 import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
-import { AREAS, NAME_HASH, ORIGINALS_BUCKET, VARIANTS_BUCKET, variantKey, type Manifest } from '../src/images/config.ts';
+import { AREAS, NAME_HASH, ORIGINALS_BUCKET, SHARE_WIDTH, VARIANTS_BUCKET, shareKey, variantKey, type Manifest } from '../src/images/config.ts';
 import {
   collectRefs, objectKeys, planGc, planSync, splitKey, variantWidths, type Items, type LocalFile, type SyncPlan,
 } from './img-plan.ts';
@@ -47,9 +47,9 @@ function r2() {
     if (!res.ok) throw new Error(`${method} ${bucket}/${key}: ${res.status} ${await res.text()}`);
     return res;
   };
-  // Keys never collide across buckets: variants end in ".<width>w.avif", originals do not
-  // (an original name has no dot before its extension).
-  const bucketFor = (key: string) => (/\.\d+w\.avif$/.test(key) ? VARIANTS_BUCKET : ORIGINALS_BUCKET);
+  // Keys never collide across buckets: a derived file ends in ".<width>w.avif" or ".share.jpg",
+  // originals do not (an original name has no dot before its extension).
+  const bucketFor = (key: string) => (/\.(\d+w\.avif|share\.jpg)$/.test(key) ? VARIANTS_BUCKET : ORIGINALS_BUCKET);
   const listBucket = async (bucket: string) => {
     const objects = new Map<string, number>();
     let token = '';
@@ -163,6 +163,11 @@ async function main() {
     for (const w of variants) {
       const avif = await sharp(buf).rotate().resize({ width: w }).avif({ quality: 50 }).toBuffer();
       await bucket.put(variantKey(key, w), avif, 'image/avif');
+    }
+    const share = shareKey(key);
+    if (share) {
+      const jpeg = await sharp(buf).rotate().resize({ width: Math.min(SHARE_WIDTH, width) }).jpeg({ quality: 78 }).toBuffer();
+      await bucket.put(share, jpeg, 'image/jpeg');
     }
     await bucket.put(`${key}.${u.ext}`, buf, MIME[u.ext]);
     const to = path.join(ROOT, u.dir, `${u.stem}.${u.ext}`);

@@ -64,6 +64,19 @@ test('missing locally downloads; missing on R2 repairs from a matching local cop
   assert.match(planSync([], manifest, partial).errors[0], /missing on R2/);
 });
 
+test('a cover also owes a share JPEG on R2; other types do not', () => {
+  const C = `${J}/cover-a1b2c3d4`;
+  const manifest = { images: { [C]: entry } };
+  const withoutShare = new Map([[`${C}.jpg`, 10], [`${C}.448w.avif`, 5]]);
+  // The share JPEG is missing, so the matching local copy repairs it
+  assert.equal(planSync([file(J, 'cover-a1b2c3d4.jpg')], manifest, withoutShare).repairs.length, 1);
+  const withShare = new Map([...withoutShare, [`${C}.share.jpg`, 3]]);
+  assert.deepEqual(planSync([file(J, 'cover-a1b2c3d4.jpg')], manifest, withShare).repairs, []);
+  // A figure owes nothing beyond its original and variants, so the same two objects complete it
+  const figure = { images: { [`${J}/figure-a1b2c3d4`]: entry } };
+  assert.deepEqual(planSync([file(J, 'figure-a1b2c3d4.jpg')], figure, synced).repairs, []);
+});
+
 test('bad locations and formats are errors, never uploads', () => {
   const p = planSync([file('journal/abc', 'a.jpg'), file(J, 'IMG_1.HEIC')], { images: {} }, new Map());
   assert.equal(p.uploads.length, 0);
