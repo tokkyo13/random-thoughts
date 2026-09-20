@@ -23,7 +23,7 @@ const toc = headings.filter((h) => h.depth === 1);
 const cover = optionalImage(post.data.cover && `journal/${post.id}/${post.data.cover}`, 'eager');
 ---
 
-<BaseLayout title={post.data.title}>
+<BaseLayout title={post.data.title} description={post.data.description} image={cover?.src}>
   {
     /* The same list the side TOC holds. It fills the menu where the margin is too narrow */
     toc.length > 0 && (

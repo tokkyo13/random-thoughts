@@ -13,6 +13,7 @@ export async function GET(context: APIContext) {
     site: context.site!,
     items: posts.map((post) => ({
       title: post.data.title,
+      description: post.data.description,
       pubDate: post.data.pubDate,
       link: journalUrl(post.id),
     })),

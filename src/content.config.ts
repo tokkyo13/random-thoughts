@@ -11,6 +11,7 @@ const journal = defineCollection({
   loader: glob({ base: './src/content/journal', pattern: '*.mdx' }),
   schema: z.object({
     title: z.string(),
+    description: z.string().optional(),
     pubDate: z.coerce.date(),
     cover: cover.optional(),
     draft: z.boolean().default(false),

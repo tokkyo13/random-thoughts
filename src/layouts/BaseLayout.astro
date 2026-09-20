@@ -1,14 +1,16 @@
 ---
 import '../styles/global.css';
 import SiteHeader from '../components/SiteHeader.astro';
-import { JOURNAL_FEED_TITLE, SITE_DESCRIPTION, SITE_LANG, SITE_TITLE } from '../consts';
+import { JOURNAL_FEED_TITLE, SITE_LANG, SITE_TITLE } from '../consts';
 
 interface Props {
   title?: string;
   description?: string;
+  // Absolute URL of the picture a link preview should carry. Without one it carries none
+  image?: string;
 }
 
-const { title, description = SITE_DESCRIPTION } = Astro.props;
+const { title, description, image } = Astro.props;
 const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
 ---
 
@@ -21,7 +23,11 @@ const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
     <title>{pageTitle}</title>
-    <meta name="description" content={description} />
+    {description && <meta name="description" content={description} />}
+    {/* The title without the site name, which a card has no room for. og:description falls
+        back to the meta above, and the remaining card tags to defaults that suit this site */}
+    <meta property="og:title" content={title ?? SITE_TITLE} />
+    {image && <meta property="og:image" content={image} />}
     <link
       rel="alternate"
       type="application/rss+xml"
