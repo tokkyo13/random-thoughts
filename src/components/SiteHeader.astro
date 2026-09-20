@@ -1,17 +1,29 @@
 ---
 import { SITE_TITLE, NAV_ITEMS } from '../consts';
 import Logo from '../assets/logo.svg';
+import Menu from '../assets/icons/menu.svg';
+import Toc from '../assets/icons/toc.svg';
+import Add from '../assets/icons/add.svg';
+
+interface Props {
+  // Whether the page handed over a table of contents. It decides if the menu carries tabs
+  hasToc?: boolean;
+}
+
+const { hasToc = false } = Astro.props;
 
 const path = Astro.url.pathname;
-// A prefix match, so an article page (/journal/<id>/) marks Journal as current
-const isCurrent = (href: string) => path.startsWith(href);
+// A prefix match, so an article page (/journal/<id>/) marks Journal as current.
+// Home is the exception: '/' is a prefix of everything
+const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
 ---
 
-<header class="site-header">
-  <div class="bar">
-    <a class="brand" href="/" aria-label={SITE_TITLE}>
+<header>
+  {/* Wide viewports: a rail in the left margin, the twin of an article's TOC on the right */}
+  <div class="rail">
+    <div class="brand" role="img" aria-label={SITE_TITLE}>
       <Logo />
-    </a>
+    </div>
 
     <nav aria-label="メインメニュー">
       <ul>
@@ -31,61 +43,277 @@ const isCurrent = (href: string) => path.startsWith(href);
     </nav>
   </div>
 
-  {/* Inside the sticky header, so the row stays under the menu bar */}
-  <slot name="row" />
+  {/* Narrow viewports: the same links behind one button, kept within thumb reach */}
+  <details class="menu">
+    <summary aria-label="メニュー">
+      <Add />
+    </summary>
+
+    <div class:list={['panel', { tabbed: hasToc }]}>
+      {
+        hasToc && (
+          <Fragment>
+            <input class="visually-hidden" type="radio" name="pane" id="pane-toc" aria-label="目次" checked />
+            <input class="visually-hidden" type="radio" name="pane" id="pane-nav" aria-label="メニュー" />
+
+            <div class="pane pane-toc">
+              <slot name="toc" />
+            </div>
+          </Fragment>
+        )
+      }
+
+      <div class="pane pane-nav">
+        <nav aria-label="メインメニュー">
+          <ul>
+            {
+              NAV_ITEMS.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={isCurrent(item.href) ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+
+      {
+        hasToc && (
+          <div class="tabs">
+            <label for="pane-toc">
+              <Toc />
+            </label>
+            <label for="pane-nav">
+              <Menu />
+            </label>
+          </div>
+        )
+      }
+    </div>
+  </details>
 </header>
 
-<style>
-  .site-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: var(--bg);
-    border-bottom: 1px solid var(--border);
-  }
+<script>
+  const menu = document.querySelector<HTMLDetailsElement>('.menu');
 
-  .bar {
-    max-width: var(--frame-width);
-    margin-inline: auto;
-    padding: 0 var(--gutter);
-    height: 3.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
+  if (menu) {
+    const close = () => {
+      menu.open = false;
+    };
+
+    // Picking a link, or clicking outside, closes the menu
+    document.addEventListener('click', (event) => {
+      const target = event.target as Element;
+      if (target.closest('a') || !target.closest('.menu')) close();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') close();
+    });
+
+    // However it closed, including the button itself, the next open starts on the contents
+    menu.addEventListener('toggle', () => {
+      const toc = document.querySelector<HTMLInputElement>('#pane-toc');
+      if (!menu.open && toc) toc.checked = true;
+    });
+  }
+</script>
+
+<style>
+  .rail {
+    position: fixed;
+    top: var(--page-top);
+    /* Sits on the frame's left edge, as the article's TOC sits on its right */
+    left: calc(50% - var(--frame-width) / 2);
+    width: var(--rail-width);
   }
 
   .brand {
-    display: inline-flex;
-    align-items: center;
-    text-decoration: none;
+    display: flex;
   }
 
   .brand :global(svg) {
     display: block;
-    height: var(--fs-xl);
+    height: var(--logo-height);
     width: auto;
   }
 
-  nav ul {
+  .rail ul {
     display: flex;
-    align-items: center;
-    gap: clamp(1rem, 4vw, 1.75rem);
-    margin: 0;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 1.75rem 0 0;
     padding: 0;
     list-style: none;
   }
 
-  nav a {
-    display: inline-block;
-    padding: 0.25rem 0;
+  .rail nav a {
+    display: block;
+    padding-left: 0.85rem;
     letter-spacing: 0.06em;
-    color: var(--text);
+    color: var(--text-muted);
     text-decoration: none;
-    border-bottom: var(--underline) solid transparent;
+    border-left: var(--underline) solid transparent;
   }
 
-  nav a[aria-current='page'] {
-    border-bottom-color: var(--accent);
+  .rail nav a:hover {
+    color: var(--text);
+  }
+
+  .rail nav a[aria-current='page'] {
+    color: var(--text);
+    border-left-color: var(--accent);
+  }
+
+  .menu {
+    display: none;
+  }
+
+  /* No room for the rails (see --frame-width in global.css): one button takes over */
+  @media (max-width: 83rem) {
+    .rail {
+      display: none;
+    }
+
+    .menu {
+      display: block;
+      position: fixed;
+      right: var(--gutter);
+      bottom: max(var(--gutter), env(safe-area-inset-bottom));
+      z-index: 10;
+    }
+
+    .menu summary {
+      display: grid;
+      place-items: center;
+      width: 2.75rem; /* 44px, a comfortable touch target */
+      height: 2.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .menu summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .menu summary :global(svg) {
+      width: 1.25rem;
+      height: 1.25rem;
+      fill: currentColor;
+      transition: transform 0.15s;
+    }
+
+    /* A plus turned an eighth of a turn is a cross */
+    .menu[open] summary :global(svg) {
+      transform: rotate(45deg);
+    }
+
+    /* Grows upward from the button, so the tabs and the nearest items stay under the thumb */
+    .panel {
+      position: absolute;
+      right: 0;
+      bottom: calc(100% + 0.6rem);
+      display: flex;
+      flex-direction: column;
+      width: max-content;
+      min-width: 11rem;
+      max-width: min(20rem, calc(100vw - var(--gutter) * 2));
+      max-height: 60dvh;
+      overflow: hidden; /* so the panes clip to the rounded corners */
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    /* Without a TOC there are no tabs, and the menu pane is the whole panel */
+    .pane {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 0.5rem 0;
+    }
+
+    .tabbed .pane {
+      display: none;
+    }
+
+    #pane-toc:checked ~ .pane-toc,
+    #pane-nav:checked ~ .pane-nav {
+      display: flex;
+    }
+
+    /* The TOC arrives through the slot, outside this component scope */
+    .panel :global(ul) {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .panel :global(a) {
+      display: block;
+      padding: 0.5rem 1rem;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+
+    .panel :global(a:hover),
+    .panel :global(a[aria-current='page']) {
+      color: var(--text);
+    }
+
+    .pane-toc :global(a) {
+      font-size: var(--fs-xs);
+    }
+
+    /* The dark strip is the well the tabs sit in; only the open one lifts out of it */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg);
+    }
+
+    /* A closed tab shows the well through it */
+    .tabs label {
+      display: grid;
+      place-items: center;
+      padding: 0.5rem 0;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    .tabs label :global(svg) {
+      width: 1.25rem;
+      height: 1.25rem;
+      fill: currentColor;
+    }
+
+    .menu summary,
+    .panel {
+      box-shadow: var(--shadow);
+    }
+
+    /* The open tab carries the pane's own surface down, unbroken, and hangs from it */
+    #pane-toc:checked ~ .tabs label[for='pane-toc'],
+    #pane-nav:checked ~ .tabs label[for='pane-nav'] {
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* The radios are hidden, so the focus ring goes on the tab each one drives */
+    #pane-toc:focus-visible ~ .tabs label[for='pane-toc'],
+    #pane-nav:focus-visible ~ .tabs label[for='pane-nav'] {
+      outline: 2px solid var(--accent);
+      outline-offset: -2px;
+    }
   }
 </style>

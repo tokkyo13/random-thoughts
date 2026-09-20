@@ -1,29 +1,64 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { image, SIZES } from "../images";
+import Logo from "../assets/logo.svg";
+import { SITE_TITLE } from "../consts";
 ---
 
 <BaseLayout>
+  {/* Stands in for the rail's logo, which this width does not show */}
+  <div class="brand" role="img" aria-label={SITE_TITLE}>
+    <Logo />
+  </div>
+
   <figure>
     <img {...image("home/cover-2b0dd78b", "eager")} sizes={SIZES.prose} fetchpriority="high" alt="" />
   </figure>
 </BaseLayout>
 
 <style>
-  /* Centers the image vertically, on this page only */
+  /* On this page only, so the image can center itself against the viewport */
   :global(.site-main) {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    position: relative;
   }
 
+  /* Auto block margins split the free space evenly, and fall to zero when there is none */
   figure {
-    margin: 0;
+    margin: auto 0;
   }
 
   img {
     display: block;
     width: 100%;
     border-radius: var(--radius);
+  }
+
+  .brand {
+    display: none;
+  }
+
+  /* No rail at this width (see --frame-width in global.css), so the logo leads the page */
+  @media (max-width: 83rem) {
+    .brand {
+      display: block;
+      position: absolute;
+      top: var(--page-top);
+      left: var(--gutter);
+    }
+
+    /* The logo is out of flow, so the image centers on the viewport, not on what is left.
+       Matching the padding top and bottom keeps that center true, and the top half doubles
+       as the landing place for an image too tall to fit, which then scrolls clear of the logo */
+    :global(.site-main) {
+      padding-block: calc(var(--page-top) + var(--logo-height) + 1rem);
+    }
+
+    .brand :global(svg) {
+      display: block;
+      height: var(--logo-height);
+      width: auto;
+    }
   }
 </style>

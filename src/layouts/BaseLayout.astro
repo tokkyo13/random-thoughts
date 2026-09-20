@@ -1,8 +1,7 @@
 ---
 import '../styles/global.css';
 import SiteHeader from '../components/SiteHeader.astro';
-import ExternalLink from '../components/ExternalLink.astro';
-import { AUTHOR, FIRST_PUBLISHED, JOURNAL_FEED_TITLE, SITE_DESCRIPTION, SITE_LANG, SITE_TITLE, SOURCE_URL } from '../consts';
+import { JOURNAL_FEED_TITLE, SITE_DESCRIPTION, SITE_LANG, SITE_TITLE } from '../consts';
 
 interface Props {
   title?: string;
@@ -31,33 +30,12 @@ const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
     />
   </head>
   <body>
-    <SiteHeader>
-      <slot name="header-row" slot="row" />
+    <SiteHeader hasToc={Astro.slots.has('toc')}>
+      <slot name="toc" slot="toc" />
     </SiteHeader>
 
     <main class="site-main">
       <slot />
     </main>
-
-    <footer class="site-footer">
-      <p>&copy; {FIRST_PUBLISHED} {AUTHOR.latin} | <ExternalLink href={SOURCE_URL}>Source</ExternalLink> | <a href="/journal/rss.xml">RSS</a></p>
-    </footer>
   </body>
 </html>
-
-<style>
-  .site-footer {
-    border-top: 1px solid var(--border);
-  }
-
-  /* Same frame as the header bar */
-  .site-footer p {
-    max-width: var(--frame-width);
-    margin: 0 auto;
-    padding: 0.9rem var(--gutter);
-    line-height: 1.6;
-    color: var(--text-muted);
-    font-size: var(--fs-xs);
-    letter-spacing: 0.04em;
-  }
-</style>

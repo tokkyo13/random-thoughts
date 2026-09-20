@@ -2,16 +2,18 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import ExternalLink from '../components/ExternalLink.astro';
+import { SOURCE_URL } from '../consts';
 
 const links = [
   { label: 'Bluesky', url: 'https://bsky.app/profile/tokkyo13.bsky.social' },
   { label: 'Pixiv', url: 'https://pixiv.me/tokkyo13' },
   { label: 'GitHub', url: 'https://github.com/tokkyo13' },
+  { label: 'Source', url: SOURCE_URL },
 ];
 ---
 
-<BaseLayout title="Links" description="外部サイトへのリンク">
-  <PageHeader title="Links" lead="外部サイト" />
+<BaseLayout title="Links" description="外部サイトとフィードへのリンク">
+  <PageHeader title="Links" lead="外部サイトとフィード" />
 
   <div class="prose">
     <ul>
@@ -22,6 +24,8 @@ const links = [
           </li>
         ))
       }
+      {/* Same origin, so it does not get the external-link treatment */}
+      <li><a href="/journal/rss.xml">RSS</a></li>
     </ul>
   </div>
 </BaseLayout>
