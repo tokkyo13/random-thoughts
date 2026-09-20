@@ -228,6 +228,7 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
       max-width: min(20rem, calc(100vw - var(--gutter) * 2));
       max-height: 60dvh;
       overflow: hidden; /* so the panes clip to the rounded corners */
+      overscroll-behavior: contain;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -239,7 +240,13 @@ const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWi
       flex-direction: column;
       min-height: 0;
       overflow-y: auto;
+      /* A wheel over the menu stays in the menu, and never runs on into the page */
+      overscroll-behavior: contain;
       padding: 0.5rem 0;
+   
+      /* Ten rows at most. A row is a link line box (body line-height) plus its padding,
+         and the last term is this pane own padding; --panel keeps the short-screen guard */
+      max-height: calc((var(--fs-xs) * 1.9 + 1rem) * 10 + 1rem);
     }
 
     .tabbed .pane {
