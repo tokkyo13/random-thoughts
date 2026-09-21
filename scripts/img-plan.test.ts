@@ -1,7 +1,7 @@
 // npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areaOf, collectRefs, planGc, planSync, variantWidths } from './img-plan.ts';
+import { areaOf, collectRefs, planCovers, planGc, planStrays, planSync, variantWidths, writeNames } from './img-plan.ts';
 
 const J = 'journal/1789139909';
 const MD5 = 'a1b2c3d4e5f60718293a4b5c6d7e8f90'; // -> figure-a1b2c3d4, cover-a1b2c3d4
@@ -99,14 +99,86 @@ test('gc deletes only what nothing references, and says why', () => {
   ]);
 });
 
+test('gc also takes the objects no image claims, and leaves the ones they do', () => {
+  const manifest = { images: { [`${J}/figure-a1b2c3d4`]: entry } };
+  const remote = new Map([
+    ...synced,
+    [`${J}/figure-a1b2c3d4.896w.avif`, 7], // a width the list no longer has
+    ['journal/1789000000/cover-a1b2c3d4.share.jpg', 3], // an image that is gone from the manifest
+  ]);
+  assert.deepEqual(planStrays(manifest, remote), [
+    'journal/1789000000/cover-a1b2c3d4.share.jpg',
+    `${J}/figure-a1b2c3d4.896w.avif`,
+  ]);
+  assert.deepEqual(planStrays(manifest, synced), []);
+});
+
 test('variant widths never exceed the original', () => {
   assert.deepEqual(variantWidths(J, 'figure', 1000), [448, 896]);
   assert.deepEqual(variantWidths(J, 'figure', 300), [300]);
 });
 
-test('a full area also keeps the original width, and never twice', () => {
+test('a picture item without a cover has its first image copied to one', () => {
   const P = 'picture/1789139909';
-  assert.deepEqual(variantWidths(P, 'cover', 2400), [640, 896, 1792, 2400]);
-  assert.deepEqual(variantWidths(P, 'cover', 1792), [640, 896, 1792]);
-  assert.deepEqual(variantWidths(P, 'cover', 500), [500]);
+  const local = [file(P, '02.png', OTHER), file(P, '01.png'), file(P, 'notes.txt')];
+  const plan = planSync(local, { images: {} }, new Map());
+  // Names are listed in file-name order, so 01.png leads and gives the cover its bytes
+  assert.deepEqual(plan.order.get(P), ['art-a1b2c3d4', 'art-ffff0000']);
+  assert.deepEqual(planCovers(local, plan, { images: {} }), [
+    { dir: P, from: '01.png', to: 'cover-a1b2c3d4.png' },
+  ]);
+});
+
+test('a cover already on disk or in the manifest is not copied again, and only picture gets one', () => {
+  const P = 'picture/1789139909';
+  const named = [file(P, 'cover.png'), file(P, '01.png', OTHER)];
+  assert.deepEqual(planCovers(named, planSync(named, { images: {} }, new Map()), { images: {} }), []);
+
+  const plain = [file(P, '01.png')];
+  const manifest = { images: { [`${P}/cover-ffff0000`]: { ...entry, md5: OTHER } } };
+  assert.deepEqual(planCovers(plain, planSync(plain, manifest, new Map()), manifest), []);
+
+  const other = [file(J, 'figure.jpg'), file('work/1789139901', 'thumb.png')];
+  assert.deepEqual(planCovers(other, planSync(other, { images: {} }, new Map()), { images: {} }), []);
+});
+
+const entryText = (body: string) => ['---', "title: 'x'", 'pubDate: 2026-09-20', body, '---', '', 'text'].join('\n');
+
+test('names are written into the frontmatter, in order, and only once', () => {
+  const empty = entryText(["cover: ''", 'images: []'].join('\n'));
+  const first = writeNames(empty, ['cover-a1b2c3d4', 'art-a1b2c3d4', 'art-ffff0000']);
+  assert.equal(first.problem, undefined);
+  assert.deepEqual(first.added, ['cover-a1b2c3d4', 'art-a1b2c3d4', 'art-ffff0000']);
+  assert.equal(
+    first.text,
+    entryText(["cover: 'cover-a1b2c3d4'", 'images:', '  - art-a1b2c3d4', '  - art-ffff0000'].join('\n')),
+  );
+
+  // Running again changes nothing, and a later image joins the end of the list as it stands
+  assert.deepEqual(writeNames(first.text, ['cover-a1b2c3d4', 'art-a1b2c3d4', 'art-ffff0000']).added, []);
+  const more = writeNames(first.text, ['cover-a1b2c3d4', 'art-a1b2c3d4', 'art-0f0f0f0f']);
+  assert.deepEqual(more.added, ['art-0f0f0f0f']);
+  assert.match(more.text, /- art-ffff0000\n  - art-0f0f0f0f/);
+});
+
+test('an order set by hand is kept, and a filled cover is left alone', () => {
+  const edited = entryText(["cover: 'cover-ffff0000'", 'images:', '  - art-ffff0000', '  - art-a1b2c3d4'].join('\n'));
+  const p = writeNames(edited, ['cover-a1b2c3d4', 'art-a1b2c3d4', 'art-ffff0000']);
+  assert.deepEqual(p.added, []);
+  assert.equal(p.text, edited);
+});
+
+test('a list this tool cannot extend is reported, never rewritten', () => {
+  const flow = entryText(["cover: ''", "images: ['art-ffff0000']"].join('\n'));
+  const p = writeNames(flow, ['art-a1b2c3d4']);
+  assert.match(p.problem!, /images:/);
+  assert.equal(p.text, flow);
+  assert.equal(writeNames('no frontmatter here', ['art-a1b2c3d4']).problem, 'has no frontmatter');
+});
+
+test('CRLF stays CRLF', () => {
+  const crlf = entryText(["cover: ''", 'images: []'].join('\n')).split('\n').join('\r\n');
+  const p = writeNames(crlf, ['art-a1b2c3d4']);
+  assert.equal(p.text.includes('\r\n  - art-a1b2c3d4\r\n'), true);
+  assert.equal(p.text.includes('\n\n'), false);
 });

@@ -8,9 +8,15 @@ interface Props {
   description?: string;
   // Absolute URL of the picture a link preview should carry. Without one it carries none
   image?: string;
+  // Whether the page fills its slot of the menu panel. A slot holding a false expression
+  // still counts as handed over, so the page says so itself
+  hasToc?: boolean;
+  hasControls?: boolean;
 }
 
-const { title, description, image } = Astro.props;
+const { title, description, image, hasToc = false, hasControls = false } = Astro.props;
+// Home lays itself out and carries no rails, the same call SiteHeader makes
+const isHome = Astro.url.pathname === '/';
 const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
 ---
 
@@ -35,9 +41,10 @@ const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
       href="/journal/rss.xml"
     />
   </head>
-  <body>
-    <SiteHeader hasToc={Astro.slots.has('toc')}>
+  <body class:list={{ home: isHome, railed: hasToc || hasControls }}>
+    <SiteHeader hasToc={hasToc} hasControls={hasControls}>
       <slot name="toc" slot="toc" />
+      <slot name="controls" slot="controls" />
     </SiteHeader>
 
     <main class="site-main">

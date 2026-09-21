@@ -9,7 +9,8 @@ import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
 import { AREAS, NAME_HASH, ORIGINALS_BUCKET, SHARE_WIDTH, VARIANTS_BUCKET, shareKey, variantKey, type Manifest } from '../src/images/config.ts';
 import {
-  collectRefs, objectKeys, planGc, planSync, splitKey, variantWidths, type Items, type LocalFile, type SyncPlan,
+  collectRefs, objectKeys, planCovers, planGc, planStrays, planSync, splitKey, variantWidths, writeNames,
+  type CoverCopy, type Items, type LocalFile, type SyncPlan,
 } from './img-plan.ts';
 
 const ROOT = 'r2-clone';
@@ -103,7 +104,7 @@ async function orientedSize(buf: Buffer) {
   return { width: swap ? m.height! : m.width!, height: swap ? m.width! : m.height! };
 }
 
-async function printSync(plan: SyncPlan) {
+async function printSync(plan: SyncPlan, covers: CoverCopy[]) {
   const lines = new Map<string, string[]>();
   const add = (dir: string, line: string) => lines.set(dir, [...(lines.get(dir) ?? []), line]);
   for (const [sign, list] of [['+', plan.uploads], ['*', plan.repairs]] as const) {
@@ -119,10 +120,14 @@ async function printSync(plan: SyncPlan) {
     const [dir, stem] = splitKey(d.key);
     add(dir, `  < ${stem.padEnd(NAME_COL)}  download`);
   }
+  for (const c of covers) {
+    const stem = c.to.slice(0, c.to.lastIndexOf('.'));
+    add(c.dir, `  + ${stem.padEnd(NAME_COL)}  ${'copy of the first image'.padEnd(20)}  <- ${c.from}`);
+  }
   for (const dir of [...lines.keys()].sort()) console.log(`\n${dir}\n${lines.get(dir)!.join('\n')}`);
   for (const w of plan.warnings) console.log(`\n! ${w}`);
   for (const e of plan.errors) console.log(`\nx ${e}`);
-  const counts = `${plan.uploads.length} to upload, ${plan.downloads.length} to download, ${plan.repairs.length} to repair`;
+  const counts = `${plan.uploads.length} to upload, ${plan.downloads.length} to download, ${plan.repairs.length} to repair, ${covers.length} cover(s) to copy`;
   console.log(`\nPlan: ${counts}. ${plan.warnings.length} warning(s), ${plan.errors.length} error(s).`);
 }
 
@@ -142,15 +147,27 @@ async function main() {
   const manifest: Manifest = fs.existsSync(MANIFEST) ? JSON.parse(read(MANIFEST)) : { images: {} };
   const local = scanLocal();
   const remote = await bucket.list();
-  const plan = planSync(local, manifest, remote);
+  let plan = planSync(local, manifest, remote);
+  const covers = planCovers(local, plan, manifest);
 
-  if (command === 'gc') return gc(bucket, manifest, plan);
+  if (command === 'gc') return gc(bucket, manifest, plan, remote);
 
-  await printSync(plan);
+  await printSync(plan, covers);
   if (plan.errors.length > 0) fail('\nFix the errors above first.');
   if (command === 'plan') return;
-  if (plan.uploads.length + plan.repairs.length + plan.downloads.length === 0) return console.log('Nothing to do.');
+  const work = plan.uploads.length + plan.repairs.length + plan.downloads.length + covers.length;
+  if (work === 0) return console.log('Nothing to do.');
   if ((await ask('\nApply? [y/N] ')).toLowerCase() !== 'y') fail('Cancelled.');
+
+  // The copies come first, and the plan is made again: from there a cover is an ordinary new
+  // file, and gets the widths and the share JPEG its name asks for.
+  if (covers.length > 0) {
+    for (const c of covers) {
+      fs.copyFileSync(path.join(ROOT, c.dir, c.from), path.join(ROOT, c.dir, c.to));
+      console.log(`copied ${c.dir}/${c.to}`);
+    }
+    plan = planSync(scanLocal(), manifest, remote);
+  }
 
   for (const u of [...plan.uploads, ...plan.repairs]) {
     const from = path.join(ROOT, u.dir, u.from);
@@ -185,7 +202,25 @@ async function main() {
     fs.writeFileSync(to, await bucket.get(`${d.key}.${d.entry.ext}`));
     console.log(`downloaded ${d.key}`);
   }
+  for (const [dir, names] of plan.order) {
+    if (dir.startsWith(`${WRITE_BACK_AREA}/`)) writeBack(splitKey(dir)[1], names);
+  }
   console.log('\nDone. Commit the manifest together with the articles that use the images.');
+}
+
+// A picture entry lists its images in the order it shows them, so the tool fills that list in.
+// Other areas name their images by hand, where a page needs one.
+const WRITE_BACK_AREA = 'picture';
+
+function writeBack(id: string, names: string[]) {
+  const file = `src/content/${WRITE_BACK_AREA}/${id}.mdx`;
+  if (!fs.existsSync(file)) return console.log(`! ${file} does not exist; nothing to write the names into`);
+  const { text, added, problem } = writeNames(read(file), names);
+  if (added.length > 0) {
+    fs.writeFileSync(file, text);
+    console.log(`wrote ${added.length} name(s) into ${file}`);
+  }
+  if (problem) console.log(`! ${file} ${problem}; add by hand: ${names.join(', ')}`);
 }
 
 // For each perItem area in AREAS: item id -> the text to search for image names.
@@ -202,7 +237,7 @@ const ITEM_SOURCES: Record<string, () => Map<string, string>> = {
   work: () =>
     new Map((JSON.parse(read('src/content/work/work.json')) as { id: number }[]).map((w) => [String(w.id), JSON.stringify(w)])),
 };
-async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncPlan) {
+async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncPlan, remote: Map<string, number>) {
   if (plan.errors.length + plan.uploads.length + plan.repairs.length + plan.downloads.length > 0) {
     fail('Local and R2 are not in sync. Run "npm run img apply" first.');
   }
@@ -220,7 +255,8 @@ async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncP
     .filter((f) => /\.(astro|ts|tsx|js|mjs|md|mdx|json)$/.test(f) && f !== MANIFEST && fs.statSync(f).isFile())
     .map(read);
   const deletions = planGc(manifest, collectRefs(items, sources), items);
-  if (deletions.length === 0) return console.log('Nothing to delete.');
+  const strays = planStrays(manifest, remote);
+  if (deletions.length + strays.length === 0) return console.log('Nothing to delete.');
 
   const groups = new Map<string, string[]>();
   let objects = 0;
@@ -233,9 +269,16 @@ async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncP
     groups.set(group, [...(groups.get(group) ?? []), `  - ${stem.padEnd(NAME_COL)}  original + ${n} variant${n > 1 ? 's' : ''}`]);
   }
   for (const [group, lines] of groups) console.log(`\n${group}\n${lines.join('\n')}`);
-  console.log(`\nPlan: ${deletions.length} image(s) (${objects} objects) to delete from R2 and ${ROOT}/.`);
+  if (strays.length > 0) {
+    console.log(`\nR2 only  (no image claims them)\n${strays.map((k) => `  - ${k}`).join('\n')}`);
+  }
+  const counts = [
+    `${deletions.length} image(s) (${objects} objects) to delete from R2 and ${ROOT}/`,
+    ...(strays.length > 0 ? [`${strays.length} object(s) to delete from R2`] : []),
+  ];
+  console.log(`\nPlan: ${counts.join(', ')}.`);
 
-  const expected = `delete ${deletions.length}`;
+  const expected = `delete ${deletions.length + strays.length}`;
   if ((await ask(`Type "${expected}" to confirm: `)) !== expected) fail('Cancelled; nothing was deleted.');
 
   for (const { key } of deletions) {
@@ -246,6 +289,10 @@ async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncP
     fs.rmSync(path.join(ROOT, `${key}.${entry.ext}`), { force: true });
     delete manifest.images[key];
     saveManifest(manifest);
+    console.log(`deleted ${key}`);
+  }
+  for (const key of strays) {
+    await bucket.delete(key);
     console.log(`deleted ${key}`);
   }
 }

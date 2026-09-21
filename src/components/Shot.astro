@@ -1,0 +1,69 @@
+---
+import { SIZES, type Image } from '../images';
+
+// One image of a picture entry: the picture itself and its number. The number sits on the
+// image, where it costs the picture the least.
+interface Props {
+  shot: Image;
+  n: number; // 1-based
+  total: number;
+  title: string; // the entry's title, which is what the picture is
+}
+
+const { shot, n, total, title } = Astro.props;
+const counter = total > 1 ? `${n} / ${total}` : '';
+---
+
+<figure class="frame">
+  <img
+    {...shot}
+    sizes={SIZES.gallery}
+    fetchpriority={n === 1 ? 'high' : undefined}
+    alt={[title, counter].filter(Boolean).join(' ')}
+  />
+
+  {counter && <figcaption>{counter}</figcaption>}
+</figure>
+
+<style>
+  .frame {
+    position: relative;
+    margin: 0;
+  }
+
+  .frame img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+
+  /* The switch on the page fits every picture of it at once. Fitted, a picture is as tall
+     as the window and narrower than the column, so the frame shrinks with it and the number
+     stays on its corner */
+  :global(body:has(.fit:checked)) .frame {
+    width: fit-content;
+    margin-inline: auto;
+  }
+
+  :global(body:has(.fit:checked)) .frame img {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(100dvh - var(--page-top) * 2);
+  }
+
+  /* The darkest of the palette, so the number reads over any picture, and set back from it
+     so it takes as little of the picture as it can */
+  figcaption {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    padding: 0.1em 0.7em;
+    border-radius: var(--radius-pill);
+    background: var(--code-bg);
+    color: var(--text);
+    font-size: var(--fs-xs);
+    letter-spacing: var(--ls-body);
+    opacity: 0.5;
+  }
+</style>

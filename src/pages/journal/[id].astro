@@ -24,7 +24,12 @@ const coverKey = post.data.cover && `journal/${post.id}/${post.data.cover}`;
 const cover = optionalImage(coverKey, 'eager');
 ---
 
-<BaseLayout title={post.data.title} description={post.data.description} image={shareImage(coverKey)}>
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  image={shareImage(coverKey)}
+  hasToc={toc.length > 0}
+>
   {
     /* The same list the side TOC holds. It fills the menu where the margin is too narrow */
     toc.length > 0 && (
@@ -40,14 +45,13 @@ const cover = optionalImage(coverKey, 'eager');
     )
   }
 
-  <div class="layout">
-    <article>
-      <header class="post-header">
-        <p class="meta">
+  <article>
+      <header class="item-head">
+        <p>
           <FormattedDate date={post.data.pubDate} />
         </p>
 
-        <h1 class="title">{post.data.title}</h1>
+        <h1>{post.data.title}</h1>
       </header>
 
       <div class="prose">
@@ -77,42 +81,20 @@ const cover = optionalImage(coverKey, 'eager');
         </aside>
       )
     }
-  </div>
-
-  <nav class="post-nav">
-    <a class="quiet" href="/journal/">&larr; 記事一覧へ</a>
-  </nav>
 </BaseLayout>
 
 <style>
-  .layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--rail-width);
-    gap: var(--rail-gap);
-    align-items: start;
-    /* The TOC hangs into the right margin; the prose keeps its width */
-    margin-right: calc((var(--rail-width) + var(--rail-gap)) * -1);
-  }
-
-  /* The line dividing the TOC from the article. It hangs off the layout, not off the TOC,
-     because it runs the height of the viewport and the TOC is only as tall as its list.
-     The nav rail carries the matching line on the other side */
-  .layout:has(.toc)::after {
-    content: '';
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: calc(50% + var(--frame-width) / 2 - var(--rail-width));
-    border-left: var(--rule);
-  }
-
+  /* The right margin, against the edge of the screen and just inside the line the header
+     draws there. The nav rail is its twin on the left, and the article keeps the middle */
   .toc {
-    position: sticky;
+    position: fixed;
     top: var(--page-top); /* level with the nav rail on the other side */
+    right: 0;
+    width: var(--rail-width);
+    padding: 0 var(--gutter) 0 1rem;
     max-height: calc(100dvh - var(--page-top) * 2);
     overflow-y: auto;
     line-height: var(--lh-snug);
-    padding-left: 1rem;
   }
 
   .toc li + li {
@@ -124,44 +106,14 @@ const cover = optionalImage(coverKey, 'eager');
     scroll-margin-top: 1rem;
   }
 
-  /* The side TOC needs the full frame (see --frame-width in global.css).
-     Narrower, it would scroll the page sideways, so the menu carries it instead */
-  @media (max-width: 83rem) {
-    .layout {
-      /* Not 1fr, which cannot shrink below a wide code block */
-      grid-template-columns: minmax(0, 1fr);
-      gap: 0;
-      margin-right: 0;
-    }
-
-    .toc,
-    .layout::after {
+  /* No room for the margins (see --frame-width in global.css): the menu carries the list */
+  @media (max-width: 85rem) {
+    .toc {
       display: none;
     }
   }
 
-  .post-header {
+  .item-head {
     margin-bottom: var(--header-gap);
-  }
-
-  .meta {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: var(--fs-xs);
-    letter-spacing: var(--ls-body);
-  }
-
-  .title {
-    margin: var(--title-gap) 0 0;
-    font-size: var(--fs-xl);
-    font-weight: 600;
-    letter-spacing: var(--ls-wide);
-    line-height: var(--lh-heading);
-  }
-
-  .post-nav {
-    margin-top: var(--section-gap);
-    padding-top: var(--rule-gap);
-    border-top: var(--rule);
   }
 </style>

@@ -100,15 +100,20 @@ MDX differs from Markdown in a few places: autolinks (`<https://...>`) and inden
 
 ### Picture
 
-Each illustration is a single file, `src/content/picture/<id>.mdx`, named and numbered like an article. The list at `/picture/` shows a square thumbnail cropped from the center; the page at `/picture/<id>/` shows the illustration at the width of the text column, and links it at full size.
+Each entry is a single file, `src/content/picture/<id>.mdx`, named and numbered like an article. An entry holds one illustration or a set of them. The list at `/picture/` shows a square thumbnail cropped from the center; the page at `/picture/<id>/` shows the first image at the width of the text column, and a button opens the rest below it. Every image carries its number in the set, and one switch fits them all to the height of the window.
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `title` | yes | Title of the illustration |
+| `title` | yes | Title of the entry |
 | `pubDate` | yes | Publication date. The list is sorted by it, newest first |
-| `cover` | yes | The illustration itself, such as `cover-a3f91c2b`. An empty or unknown name shows an empty frame, so the entry can be written before the image is uploaded |
+| `cover` | yes | The thumbnail of the list, and the picture a link preview shows. An empty or unknown name shows an empty frame |
+| `images` | | The images of the entry, shown in this order. The first one is the one the page opens with |
 
-The body of the file is the description, shown under the title. It may be left empty, and is MDX like an article, except that `Fig` is not available: the page carries one illustration and no others.
+The body of the file is the description, shown under the first image, and in the right margin once the rest are open. It may be left empty, and is MDX like an article, except that `Fig` is not available: the images of an entry are the list above.
+
+`npm run img apply` fills both lines in. It appends every name it assigns that the entry does not list yet, in the order the file names sort, and never reorders and never removes. So a set is arranged by naming the files `01`, `02`, … and rearranged afterwards by moving lines. To drop an image, delete its line and run `npm run img gc`.
+
+An entry with no cover gets one: `apply` copies its first image to a `cover` name before uploading. The copy holds the same bytes, so its name follows from the same hash, and from there it is an ordinary image with the widths and the share JPEG a cover carries. Name a file `cover.png` to choose a different one.
 
 ## Images
 
@@ -120,7 +125,7 @@ Images are grouped into areas, defined in one table (`AREAS` in `src/images/conf
 | --- | --- | --- |
 | home | `home/` | `cover` |
 | journal | `journal/<id>/` | `figure`, `cover` |
-| picture | `picture/<id>/` | `cover` |
+| picture | `picture/<id>/` | `art`, `cover` |
 | work | `work/<id>/` | `cover` |
 
 
@@ -129,7 +134,7 @@ Every image is named `<type>-<hash>`, such as `figure-a3f91c2b`, where the hash 
 ### Storage
 
 - **Originals** go to a private bucket under `<dir>/<name>.<ext>`. They are stored unchanged, metadata included, which is why the bucket stays private.
-- **Variants** go to a public bucket under `<dir>/<name>.<width>w.avif` and are served from the image origin. They are generated locally with sharp as AVIF, carry no metadata, and are never wider than the original. The widths depend on the area and type. An area marked `full` also gets a variant at the width of the original: it is what a page links to when it offers the image at full size, the original itself staying private.
+- **Variants** go to a public bucket under `<dir>/<name>.<width>w.avif` and are served from the image origin. They are generated locally with sharp as AVIF, carry no metadata, and are never wider than the original. The widths depend on the area and type.
 - **Share images** go to the same public bucket under `<dir>/<name>.share.jpg`. Only covers get one, and only a link preview ever fetches it: the scrapers behind them do not read AVIF, so this is a small JPEG instead. It is not referenced by any page, so a reader never downloads it.
 - Both are uploaded with `Cache-Control: public, max-age=31536000, immutable`. Because the name follows from the content, a name can never point at different bytes, and cached copies never go stale.
 - `src/images/manifest.json` records the dimensions, MD5 hash and variant widths of every image. The site build reads only this file and never contacts R2.
@@ -154,7 +159,7 @@ To replace an image, add the new version (it gets a new name), update the refere
 | In both, same content | Nothing |
 | In the manifest, objects missing in R2 | Re-upload from the local copy if it matches, otherwise report an error |
 
-`gc` runs only when everything is in sync. It deletes, from both buckets and from `r2-clone/`, every image whose key appears nowhere: not in any article, picture or work entry, and not in any source file under `src/`. Images of deleted articles or entries are included. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
+`gc` runs only when everything is in sync. It deletes, from both buckets and from `r2-clone/`, every image whose key appears nowhere: not in any article, picture or work entry, and not in any source file under `src/`. Images of deleted articles or entries are included. It also deletes, from the buckets alone, every object that no image in the manifest claims any more, such as the variants left behind by a width list that changed. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
 
 ### Adding an area
 

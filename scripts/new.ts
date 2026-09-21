@@ -10,15 +10,17 @@ if (kind === 'journal' || kind === 'picture') {
     .map((n) => String(n).padStart(2, '0'))
     .join('-');
   const file = `src/content/${kind}/${id}.mdx`;
-  // An article starts hidden; a picture has no draft state, and names its image instead.
-  const extra = kind === 'journal' ? 'draft: true' : "cover: ''";
-  const frontmatter = `---\ntitle: ''\npubDate: ${today}\n${extra}\n---\n\n`;
+  // An article starts hidden; a picture names its images instead, and "npm run img apply"
+  // fills both lines in.
+  const extra = kind === 'journal' ? ['draft: true'] : ["cover: ''", 'images: []'];
+  const frontmatter = ['---', "title: ''", `pubDate: ${today}`, ...extra, '---', '', ''].join('\n');
   // "wx" fails instead of overwriting if two runs land on the same second.
   fs.writeFileSync(file, frontmatter, { flag: 'wx' });
   console.log(`created ${file}`);
   if (kind === 'picture') {
-    console.log('fill in title, and cover with the image name that "npm run img apply" assigns.');
-    console.log('the body of the file is the description, and may be left empty');
+    console.log('put the images in the directory below and run "npm run img apply": it names');
+    console.log('them, copies the first one to a cover, and writes both lines of the frontmatter.');
+    console.log('the order of "images" is the order they are shown in; the body is the description');
   }
 } else if (kind === 'work') {
   const file = 'src/content/work/work.json';

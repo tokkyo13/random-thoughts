@@ -37,8 +37,12 @@ const picture = defineCollection({
   schema: z.object({
     title: z.string(),
     pubDate: z.coerce.date(),
-    // The illustration itself. It is a cover, so it carries the JPEG a link preview reads.
+    // The thumbnail of the list and the picture a link preview reads. It is a copy of the
+    // first image unless one is named; "npm run img apply" makes it.
     cover: imageName,
+    // Every image of the entry, shown in this order. The tool appends the names it assigns,
+    // so editing this list is what changes the order.
+    images: z.array(imageName).default([]),
   }).strict(),
 });
 

@@ -1,10 +1,11 @@
 ---
 import { render } from 'astro:content';
 import { listPictures } from '../../pictures';
-import { optionalImage, shareImage, SIZES } from '../../images';
+import { optionalImage, shareImage } from '../../images';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
-import ExternalLink from '../../components/ExternalLink.astro';
+import Shot from '../../components/Shot.astro';
+import Controls from '../../components/Controls.astro';
 import Note from '../../components/Note.astro';
 import ProseLink from '../../components/ProseLink.astro';
 import Code from '../../components/Code.astro';
@@ -18,85 +19,222 @@ export async function getStaticPaths() {
 }
 
 const { picture } = Astro.props;
+const { title } = picture.data;
 const { Content } = await render(picture);
 const coverKey = picture.data.cover && `picture/${picture.id}/${picture.data.cover}`;
-const cover = optionalImage(coverKey, 'eager');
+// A name with no image yet is left out, so the rest of the entry still shows
+const shots = picture.data.images.flatMap(
+  (name, i) => optionalImage(`picture/${picture.id}/${name}`, i === 0 ? 'eager' : 'lazy') ?? [],
+);
+const [first, ...rest] = shots;
 // The body is the description, and it is optional; an empty one leaves the gap out
 const hasDescription = Boolean(picture.body?.trim());
 ---
 
-<BaseLayout title={picture.data.title} image={shareImage(coverKey)}>
-  <article>
-    {
-      /* The largest variant is as wide as the original. The original itself stays private:
-         it carries the metadata the variants are stripped of */
-      cover ? (
-        <ExternalLink class="full" href={cover.src}>
-          <img {...cover} sizes={SIZES.prose} fetchpriority="high" alt={picture.data.title} />
-        </ExternalLink>
-      ) : (
-        <div class="thumb" />
-      )
-    }
-
-    <header class="picture-header">
-      <p class="meta">
-        <FormattedDate date={picture.data.pubDate} />
-      </p>
-
-      <h1 class="title">{picture.data.title}</h1>
-    </header>
-
-    {
-      hasDescription && (
-        <div class="prose">
-          <Content components={{ Note, Code, pre: Pre, a: ProseLink }} />
-        </div>
-      )
-    }
-  </article>
-
-  <nav class="picture-nav">
-    <a class="quiet" href="/picture/">&larr; イラスト一覧へ</a>
-  </nav>
-</BaseLayout>
-
-<style>
-  /* The illustration keeps its own proportions at the width of the column, so a tall one
-     runs past the fold; the full size opens in a tab of its own */
-  .full img {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: var(--radius);
+<BaseLayout title={title} image={shareImage(coverKey)} hasControls>
+  {
+    /* The margin is gone on a narrow viewport, so the menu carries the same controls there.
+       Only one of the two copies is ever on screen */
+    <Controls slot="controls" />
   }
 
-  .picture-header {
+  <div class="layout">
+    {
+      /* The one switch of the page. Both copies of the controls are labels for it, and
+         Shot.astro holds what it does to the pictures */
+      <input class="visually-hidden fit" type="checkbox" id="fit" checked />
+    }
+
+    <div class="side">
+      <header class="item-head">
+        <p>
+          <FormattedDate date={picture.data.pubDate} />
+        </p>
+
+        <h1>{title}</h1>
+      </header>
+
+      {
+        hasDescription && (
+          <div class="prose">
+            <Content components={{ Note, Code, pre: Pre, a: ProseLink }} />
+          </div>
+        )
+      }
+
+      <div class="side-controls"><Controls /></div>
+    </div>
+
+    <div class="gallery">
+      {first ? <Shot shot={first} n={1} total={shots.length} title={title} /> : <div class="thumb" />}
+
+      {
+        /* Closed, nothing inside is loaded; open, loading="lazy" fetches each picture as the
+           scroll reaches it. A few hundred of them is where that stops being enough */
+        rest.length > 0 && (
+          <details class="more">
+            <summary>残り {rest.length} 枚を見る</summary>
+
+            {/* The pictures need a box of their own: a browser puts everything a details holds
+                into one of its own, and a gap on the details would fall outside it */}
+            <div class="rest">
+              {rest.map((shot, i) => (
+                <Shot shot={shot} n={i + 2} total={shots.length} title={title} />
+              ))}
+            </div>
+          </details>
+        )
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<script>
+  // Fitting resizes every picture at once, which would slide the page under the reader. The
+  // picture in the middle of the window keeps the screen: once the new size is in, it is put
+  // back against the top edge. The browser has its own scroll anchoring turned off (see the
+  // style below), so this is the only thing that moves the view.
+  const fit = document.querySelector<HTMLInputElement>('#fit');
+  const gallery = document.querySelector('.gallery');
+
+  if (fit && gallery) {
+    let anchor: Element | null = null;
+    let settled = -1; // where the view was left standing after the last correction
+
+    // Down the middle of the column, so a fitted picture is under the point whatever its
+    // shape. Between two of them the point lands in the gap, and the one before stands
+    const showing = () => {
+      const column = gallery.getBoundingClientRect();
+      const middle = document.elementFromPoint(column.left + column.width / 2, innerHeight / 2);
+      return middle?.closest('.frame') ?? anchor;
+    };
+
+    anchor = showing();
+
+    // Taken as the reader scrolls, not when the switch is used: a checkbox flips before its
+    // click is even dispatched, so by then the pictures have already been resized
+    addEventListener(
+      'scroll',
+      () => {
+        if (Math.abs(scrollY - settled) >= 1) anchor = showing(); // a scroll of their own, not ours
+      },
+      { passive: true },
+    );
+
+    fit.addEventListener('change', () => {
+      // At the top of the page there is nothing to put back, and the header would scroll away
+      if (anchor && scrollY > 0) {
+        scrollBy(0, anchor.getBoundingClientRect().top); // reading the rectangle settles the new layout
+      }
+      settled = scrollY;
+    });
+  }
+</script>
+
+<style>
+  /* The script above puts the view back after a resize, and the browser would otherwise
+     correct the same resize again on the next frame: the two together land a picture out */
+  :global(body) {
+    overflow-anchor: none;
+  }
+
+  .layout,
+  .rest {
+    display: grid;
+    gap: var(--item-gap);
+  }
+
+  /* The gap the layout puts under the gallery, put back above the pictures the button opens */
+  .rest {
     margin-top: var(--item-gap);
   }
 
-  .meta {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: var(--fs-xs);
-    letter-spacing: var(--ls-body);
+  /* The labels that drive this sit wherever the controls are, and clicking one moves focus
+     here. Fixed to the viewport, rather than laid out with the page as .visually-hidden has
+     it, so focus finds it on screen and never scrolls the page to reach it */
+  .fit {
+    position: fixed;
+    top: 0;
+    left: 0;
   }
 
-  .title {
-    margin: var(--title-gap) 0 0;
-    font-size: var(--fs-xl);
-    font-weight: 600;
-    letter-spacing: var(--ls-wide);
-    line-height: var(--lh-heading);
+  /* Until there is a margin to put them in, the menu carries them */
+  .side-controls {
+    display: none;
+  }
+
+  /* Its own block, so the lift below stays inside it: left to collapse, the negative margin
+     would take the foot of the gallery with it, and the gap under the picture with that */
+  .more {
+    display: flow-root;
+  }
+
+  /* Lifted over the foot of the first picture: the way on is where the picture ends */
+  .more > summary {
+    position: relative;
+    z-index: 1;
+    width: fit-content;
+    margin: calc((var(--control-touch) + 0.5rem) * -1) auto 0;
+    display: flex;
+    align-items: center;
+    height: var(--control-touch);
+    padding: 0 1.25rem;
+    background: var(--surface);
+    border-radius: var(--radius-pill);
+    /* Deeper than --shadow, which is made for the page ground. This button stands on a
+       picture, and has to lift off whatever the picture is */
+    box-shadow: 0 0.125rem 0.25rem rgb(0 0 0 / 0.45), 0 0.5rem 1rem rgb(0 0 0 / 0.4);
+    color: var(--text-muted);
+    letter-spacing: var(--ls-body);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .more > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .more > summary:hover {
+    color: var(--text);
+  }
+
+  /* Once the rest are out there is no way back, so the button goes with them */
+  .more[open] > summary {
+    display: none;
   }
 
   .prose {
     margin-top: var(--item-gap);
   }
 
-  .picture-nav {
-    margin-top: var(--section-gap);
-    padding-top: var(--rule-gap);
-    border-top: var(--rule);
+  /* Room for the margins (see --frame-width in global.css), and the width at which the nav
+     rail takes the menu back */
+  @media (width > 85rem) {
+    /* The pictures take the whole middle, which is what the rails leave of the page */
+    :global(.site-main) {
+      max-width: none;
+    }
+
+    /* Everything about the entry stands in the right margin, against the edge of the screen
+       and just inside the line the header draws there. Below this width it falls back under
+       the pictures, and the menu takes the controls */
+    .side {
+      position: fixed;
+      top: var(--page-top); /* level with the nav rail on the other side */
+      right: 0;
+      width: var(--rail-width);
+      padding: 0 var(--gutter) 0 1rem;
+      max-height: calc(100dvh - var(--page-top) * 2);
+      overflow-y: auto;
+    }
+
+    .side-controls {
+      display: block;
+      margin-top: var(--header-gap);
+    }
+
+    .item-head h1 {
+      font-size: var(--fs-lg); /* the margin is narrower than the column the title is sized for */
+    }
   }
 </style>

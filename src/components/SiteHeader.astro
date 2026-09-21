@@ -6,11 +6,14 @@ import Toc from '../assets/icons/toc.svg';
 import Add from '../assets/icons/add.svg';
 
 interface Props {
-  // Whether the page handed over a table of contents. It decides if the menu carries tabs
+  // What the page handed over for the menu: an article its table of contents, a picture its
+  // controls. Either one gives the panel a second pane, and tabs to switch between them
   hasToc?: boolean;
+  hasControls?: boolean;
 }
 
-const { hasToc = false } = Astro.props;
+const { hasToc = false, hasControls = false } = Astro.props;
+const tabbed = hasToc || hasControls;
 
 const path = Astro.url.pathname;
 // A prefix match, so an article page (/journal/<id>/) marks Journal as current.
@@ -57,15 +60,23 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
           <Add />
         </summary>
 
-        <div class:list={['panel', { tabbed: hasToc }]}>
+        <div class:list={['panel', { tabbed }]}>
           {
-            hasToc && (
+            tabbed && (
               <Fragment>
-                <input class="visually-hidden" type="radio" name="pane" id="pane-toc" aria-label="目次" checked />
+                <input
+                  class="visually-hidden"
+                  type="radio"
+                  name="pane"
+                  id="pane-page"
+                  aria-label={hasToc ? '目次' : 'コントロール'}
+                  checked
+                />
                 <input class="visually-hidden" type="radio" name="pane" id="pane-nav" aria-label="メニュー" />
 
-                <div class="pane pane-toc">
+                <div class="pane pane-page">
                   <slot name="toc" />
+                  <slot name="controls" />
                 </div>
               </Fragment>
             )
@@ -91,10 +102,19 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
           </div>
 
           {
-            hasToc && (
+            tabbed && (
               <div class="tabs">
-                <label class="quiet" for="pane-toc">
-                  <Toc />
+                <label class="quiet" for="pane-page">
+                  {hasToc ? (
+                    <Toc />
+                  ) : (
+                    /* Two sliders, drawn on the same 960 grid as the icons in src/assets/icons */
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" aria-hidden="true">
+                      <path d="M120-560v-80h720v80H120Zm0 240v-80h720v80H120Z" />
+                      <circle cx="640" cy="-600" r="90" />
+                      <circle cx="320" cy="-360" r="90" />
+                    </svg>
+                  )}
                 </label>
                 <label class="quiet" for="pane-nav">
                   <Menu />
@@ -116,9 +136,12 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
       menu.open = false;
     };
 
-    // Picking a link, or clicking outside, closes the menu
+    // Picking a link, or clicking outside, closes the menu. A label in the panel forwards its
+    // click to the control it drives, and that one sits on the page: the second click is the
+    // browser passing the first one on, not the reader reaching outside the menu
     document.addEventListener('click', (event) => {
       const target = event.target as Element;
+      if (target.closest('.visually-hidden')) return;
       if (target.closest('a') || !target.closest('.menu')) close();
     });
 
@@ -126,10 +149,10 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
       if (event.key === 'Escape') close();
     });
 
-    // However it closed, including the button itself, the next open starts on the contents
+    // However it closed, including the button itself, the next open starts on the page's pane
     menu.addEventListener('toggle', () => {
-      const toc = document.querySelector<HTMLInputElement>('#pane-toc');
-      if (!menu.open && toc) toc.checked = true;
+      const first = document.querySelector<HTMLInputElement>('#pane-page');
+      if (!menu.open && first) first.checked = true;
     });
   }
 </script>
@@ -141,10 +164,9 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
     position: fixed;
     top: 0;
     bottom: 0;
-    /* Sits on the frame's left edge, as the article's TOC sits on its right */
-    left: calc(50% - var(--frame-width) / 2);
+    left: 0;
     width: var(--rail-width);
-    padding-top: var(--page-top);
+    padding: var(--page-top) 0 0 var(--gutter);
     border-right: var(--rule);
   }
 
@@ -166,16 +188,20 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
     margin-top: var(--nav-offset);
   }
 
-  /* The colors come from .nav-list in global.css; the line is this rail's own */
+  /* The colors come from .nav-list in global.css; the mark for the page you are on is this
+     rail's own, and it is the one a link in an article carries. .nav-list clears the
+     decoration a link starts with, so all of it is set again here */
   .rail nav a {
     display: block;
-    padding-left: var(--nav-indent);
+    padding-left: 0.25rem; /* off the logo, which starts at the edge of the rail */
     letter-spacing: var(--ls-wide);
-    border-left: var(--underline) solid transparent;
   }
 
   .rail nav a[aria-current='page'] {
-    border-left-color: var(--accent);
+    text-decoration-line: underline;
+    text-decoration-color: var(--accent);
+    text-decoration-thickness: var(--underline);
+    text-underline-offset: 0.25em;
   }
 
   .menu {
@@ -183,7 +209,7 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
   }
 
   /* No room for the rails (see --frame-width in global.css): one button takes over */
-  @media (max-width: 83rem) {
+  @media (max-width: 85rem) {
     .rail {
       display: none;
     }
@@ -259,15 +285,20 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
       display: none;
     }
 
-    #pane-toc:checked ~ .pane-toc,
+    #pane-page:checked ~ .pane-page,
     #pane-nav:checked ~ .pane-nav {
       display: flex;
     }
 
-    /* The TOC arrives through the slot, outside this component scope. Both lists carry
+    /* The pane arrives through a slot, outside this component scope. Every list in it carries
        .nav-list, so global.css holds their reset and their colors */
     .panel :global(a) {
       display: block;
+      padding: 0.5rem 1rem;
+    }
+
+    /* Anything that is not a list of links brings its own block, and sits in the same column */
+    .pane-page :global(section) {
       padding: 0.5rem 1rem;
     }
 
@@ -299,14 +330,14 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
     }
 
     /* The open tab carries the pane's own surface down, unbroken, and hangs from it */
-    #pane-toc:checked ~ .tabs label[for='pane-toc'],
+    #pane-page:checked ~ .tabs label[for='pane-page'],
     #pane-nav:checked ~ .tabs label[for='pane-nav'] {
       color: var(--text);
       background: var(--surface);
     }
 
     /* The radios are hidden, so the focus ring goes on the tab each one drives */
-    #pane-toc:focus-visible ~ .tabs label[for='pane-toc'],
+    #pane-page:focus-visible ~ .tabs label[for='pane-page'],
     #pane-nav:focus-visible ~ .tabs label[for='pane-nav'] {
       outline: 2px solid var(--accent);
       outline-offset: -2px;

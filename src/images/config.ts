@@ -23,9 +23,9 @@ export const shareKey = (key: string) =>
 
 type AreaSpec = {
   perItem: boolean; // one directory per item ("journal/<id>/") or one flat directory ("home/")
-  // Also keep a variant at the original width, whatever the list below says. It is what a page
-  // links to when it offers the image at full size; the private original is never public.
-  full?: boolean;
+  // An item with no cover gets one: "npm run img apply" copies its first image. The list needs
+  // a thumbnail and the page a link preview, and both follow from the name being a cover.
+  autoCover?: boolean;
   // Variant widths per type. A new file whose name starts with no type gets the first one.
   // Editing a list affects only images uploaded afterwards.
   types: Record<string, number[]>;
@@ -41,8 +41,9 @@ export const AREAS: Record<string, AreaSpec> = {
     },
   },
   work: { perItem: true, types: { cover: [480, 960] } },
-  // The illustration itself, shown at the width of the prose column and linked at full size.
-  picture: { perItem: true, full: true, types: { cover: [640, 896, 1792] } },
+  // The illustrations, shown at the width of the prose column. art is first, so a file dropped
+  // in under any name is one; only the cover has to be named.
+  picture: { perItem: true, autoCover: true, types: { art: [640, 896, 1792, 2688], cover: [640, 896, 1792, 2688] } },
   home: { perItem: false, types: { cover: [640, 1024, 1600] } },
 };
 

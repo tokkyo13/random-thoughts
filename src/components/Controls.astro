@@ -1,0 +1,69 @@
+---
+// The switch of a picture entry. It is drawn twice: in the page's right margin, and in the
+// menu panel that takes over where the margin is too narrow. Both are labels for the one
+// checkbox the page holds, so the two can never disagree. Fitting starts on: a tall picture
+// is worth more whole than large.
+---
+
+<section class="controls">
+  <label class="control" for="fit">
+    <span class="switch"></span>
+    縦幅を画面に合わせる
+  </label>
+</section>
+
+<style>
+  .control {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--text-muted);
+    line-height: var(--lh-snug);
+    cursor: pointer;
+  }
+
+  /* A switch: the box is the track and its knob rides from one end to the other */
+  .switch {
+    flex: none;
+    position: relative;
+    width: 2.25rem;
+    height: 1.25rem;
+    background: var(--bg);
+    border: var(--rule);
+    border-radius: var(--radius-pill);
+  }
+
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0.1875rem;
+    transform: translateY(-50%);
+    width: 0.875rem;
+    height: 0.875rem;
+    background: var(--text-muted);
+    border-radius: 50%;
+  }
+
+  /* The checkbox lives on the page, out of sight and out of reach of a sibling selector */
+  :global(body:has(.fit:checked)) .control {
+    color: var(--text);
+  }
+
+  :global(body:has(.fit:checked)) .switch {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  :global(body:has(.fit:checked)) .switch::after {
+    left: auto;
+    right: 0.1875rem;
+    background: var(--bg);
+  }
+
+  /* It is hidden, so its focus ring goes on the switch it drives */
+  :global(body:has(.fit:focus-visible)) .switch {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+</style>
