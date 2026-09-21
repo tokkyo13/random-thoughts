@@ -5,25 +5,12 @@ import ExternalLink from "../components/ExternalLink.astro";
 import { SOURCE_URL } from "../consts";
 
 // A path stays on this site, so it does not get the external-link treatment
-const groups = [
-  {
-    title: "このサイト",
-    links: [
-      { label: "Source", url: SOURCE_URL },
-      { label: "RSS", url: "/journal/rss.xml" },
-    ],
-  },
-  {
-    title: "他のサービス",
-    links: [
-      {
-        label: "Bluesky",
-        url: "https://bsky.app/profile/tokkyo13.bsky.social",
-      },
-      { label: "Pixiv", url: "https://pixiv.me/tokkyo13" },
-      { label: "GitHub", url: "https://github.com/tokkyo13" },
-    ],
-  },
+const links = [
+  { label: "Source", url: SOURCE_URL },
+  { label: "RSS", url: "/rss.xml" },
+  { label: "Bluesky", url: "https://bsky.app/profile/tokkyo13.bsky.social" },
+  { label: "Pixiv", url: "https://pixiv.me/tokkyo13" },
+  { label: "GitHub", url: "https://github.com/tokkyo13" },
 ];
 ---
 
@@ -31,23 +18,18 @@ const groups = [
   <PageHeader title="Link" lead="リンク集" />
 
   <div class="prose">
-    {
-      groups.map((group) => (
-        <Fragment>
-          <h2>{group.title}</h2>
-          <ul>
-            {group.links.map((link) => (
-              <li>
-                {link.url.startsWith("/") ? (
-                  <a href={link.url}>{link.label}</a>
-                ) : (
-                  <ExternalLink href={link.url}>{link.label}</ExternalLink>
-                )}
-              </li>
-            ))}
-          </ul>
-        </Fragment>
-      ))
-    }
+    <ul>
+      {
+        links.map((link) => (
+          <li>
+            {link.url.startsWith("/") ? (
+              <a href={link.url}>{link.label}</a>
+            ) : (
+              <ExternalLink href={link.url}>{link.label}</ExternalLink>
+            )}
+          </li>
+        ))
+      }
+    </ul>
   </div>
 </BaseLayout>

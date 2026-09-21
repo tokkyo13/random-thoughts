@@ -1,23 +1,23 @@
-// Creates a draft article, a picture entry or a work entry with its image directory. See README.md.
+// Creates a draft article, an art entry or a work entry with its image directory. See README.md.
 import fs from 'node:fs';
 
 const kind = process.argv[2];
 const id = Math.floor(Date.now() / 1000);
 
-if (kind === 'journal' || kind === 'picture') {
+if (kind === 'journal' || kind === 'art') {
   const d = new Date();
   const today = [d.getFullYear(), d.getMonth() + 1, d.getDate()]
     .map((n) => String(n).padStart(2, '0'))
     .join('-');
   const file = `src/content/${kind}/${id}.mdx`;
-  // An article starts hidden; a picture names its images instead, and "npm run img apply"
+  // An article starts hidden; a piece of art names its images instead, and "npm run img apply"
   // fills both lines in.
   const extra = kind === 'journal' ? ['draft: true'] : ["cover: ''", 'images: []'];
   const frontmatter = ['---', "title: ''", `pubDate: ${today}`, ...extra, '---', '', ''].join('\n');
   // "wx" fails instead of overwriting if two runs land on the same second.
   fs.writeFileSync(file, frontmatter, { flag: 'wx' });
   console.log(`created ${file}`);
-  if (kind === 'picture') {
+  if (kind === 'art') {
     console.log('put the images in the directory below and run "npm run img apply": it names');
     console.log('them, copies the first one to a cover, and writes both lines of the frontmatter.');
     console.log('the order of "images" is the order they are shown in; the body is the description');
@@ -33,7 +33,7 @@ if (kind === 'journal' || kind === 'picture') {
   console.log(`fill in title, description and url. cover takes the image name that`);
   console.log(`"npm run img apply" assigns; while it is empty the list shows a frame`);
 } else {
-  console.error('usage: npm run new journal | picture | work');
+  console.error('usage: npm run new journal | art | work');
   process.exit(1);
 }
 

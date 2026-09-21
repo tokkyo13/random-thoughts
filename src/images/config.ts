@@ -43,7 +43,7 @@ export const AREAS: Record<string, AreaSpec> = {
   work: { perItem: true, types: { cover: [480, 960] } },
   // The illustrations, shown at the width of the prose column. art is first, so a file dropped
   // in under any name is one; only the cover has to be named.
-  picture: { perItem: true, autoCover: true, types: { art: [640, 896, 1792, 2688], cover: [640, 896, 1792, 2688] } },
+  art: { perItem: true, autoCover: true, types: { art: [640, 896, 1792, 2688], cover: [640, 896, 1792, 2688] } },
   home: { perItem: false, types: { cover: [640, 1024, 1600] } },
 };
 

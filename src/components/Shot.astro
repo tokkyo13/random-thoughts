@@ -1,7 +1,7 @@
 ---
 import { SIZES, type Image } from '../images';
 
-// One image of a picture entry: the picture itself and its number. The number sits on the
+// One image of an art entry: the picture itself and its number. The number sits on the
 // image, where it costs the picture the least.
 interface Props {
   shot: Image;
@@ -14,7 +14,7 @@ const { shot, n, total, title } = Astro.props;
 const counter = total > 1 ? `${n} / ${total}` : '';
 ---
 
-<figure class="frame">
+<figure class="frame" style={`--ratio: ${shot.width} / ${shot.height}`}>
   <img
     {...shot}
     sizes={SIZES.gallery}
@@ -24,6 +24,16 @@ const counter = total > 1 ? `${n} / ${total}` : '';
 
   {counter && <figcaption>{counter}</figcaption>}
 </figure>
+
+<script>
+  // A picture has no size of its own until it is loaded, so for a moment the frames of a set
+  // stand on top of one another and so do their numbers. Each number waits for its picture.
+  for (const img of document.querySelectorAll<HTMLImageElement>('.frame img')) {
+    const mark = () => (img.dataset.loaded = '');
+    if (img.complete) mark();
+    else img.addEventListener('load', mark, { once: true });
+  }
+</script>
 
 <style>
   .frame {
@@ -38,18 +48,18 @@ const counter = total > 1 ? `${n} / ${total}` : '';
     border-radius: var(--radius);
   }
 
-  /* The switch on the page fits every picture of it at once. Fitted, a picture is as tall
-     as the window and narrower than the column, so the frame shrinks with it and the number
-     stays on its corner */
+  /* The switch on the page fits every picture of it at once. The frame takes the width that
+     the height a picture is allowed turns into, by the ratio the entry knows, so the browser
+     has it before the picture arrives: an empty frame is already the right shape, and the
+     number on its corner is where it will stay. The picture fills the frame as it always does */
   :global(body:has(.fit:checked)) .frame {
-    width: fit-content;
+    width: min(100%, calc((100dvh - var(--page-top) * 2) * var(--ratio)));
     margin-inline: auto;
   }
 
-  :global(body:has(.fit:checked)) .frame img {
-    width: auto;
-    max-width: 100%;
-    max-height: calc(100dvh - var(--page-top) * 2);
+  /* Waits for the picture it counts; the script above marks the one that has arrived */
+  img:not([data-loaded]) + figcaption {
+    display: none;
   }
 
   /* The darkest of the palette, so the number reads over any picture, and set back from it

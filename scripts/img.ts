@@ -208,9 +208,9 @@ async function main() {
   console.log('\nDone. Commit the manifest together with the articles that use the images.');
 }
 
-// A picture entry lists its images in the order it shows them, so the tool fills that list in.
+// An art entry lists its images in the order it shows them, so the tool fills that list in.
 // Other areas name their images by hand, where a page needs one.
-const WRITE_BACK_AREA = 'picture';
+const WRITE_BACK_AREA = 'art';
 
 function writeBack(id: string, names: string[]) {
   const file = `src/content/${WRITE_BACK_AREA}/${id}.mdx`;
@@ -233,7 +233,7 @@ const mdxItems = (area: string) => () =>
 
 const ITEM_SOURCES: Record<string, () => Map<string, string>> = {
   journal: mdxItems('journal'),
-  picture: mdxItems('picture'),
+  art: mdxItems('art'),
   work: () =>
     new Map((JSON.parse(read('src/content/work/work.json')) as { id: number }[]).map((w) => [String(w.id), JSON.stringify(w)])),
 };

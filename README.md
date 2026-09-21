@@ -18,7 +18,7 @@ Images are kept out of Git. Originals and their web variants live in Cloudflare 
 | `npm run preview` | Serve the build locally |
 | `npm test` | Run the unit tests (`scripts/**/*.test.ts`) |
 | `npm run new journal` | Create a draft article |
-| `npm run new picture` | Create a picture entry |
+| `npm run new art` | Create an art entry |
 | `npm run new work` | Append a work entry |
 | `npm run img plan` | Show what `apply` would do |
 | `npm run img apply` | Sync images between `r2-clone/` and R2. Never deletes anything |
@@ -30,7 +30,7 @@ Images are kept out of Git. Originals and their web variants live in Cloudflare 
 src/
   components/         Fig, Note and Code (available in articles), PageHeader, ExternalLink, ...
   content/journal/    articles, one <id>.mdx each
-  content/picture/    illustrations, one <id>.mdx each
+  content/art/        illustrations, one <id>.mdx each
   content/work/       work.json, the work entries in display order
   layouts/  pages/  styles/
   consts.ts           site-wide constants
@@ -41,7 +41,7 @@ src/
 scripts/
   img.ts              image sync tool (file system and R2 access)
   img-plan.ts         its pure planning logic, tested by img-plan.test.ts
-  new.ts              creates articles, picture entries and work entries
+  new.ts              creates articles, art entries and work entries
 creds/                r2.env (not in Git) and its template
 r2-clone/             local copy of the original images, not in Git
 ```
@@ -98,18 +98,19 @@ MDX differs from Markdown in a few places: autolinks (`<https://...>`) and inden
 | `url` | yes | Where the work is published |
 | `cover` | | Cover image name, such as `cover-a3f91c2b`. An empty or unknown name shows an empty frame |
 
-### Picture
+### Art
 
-Each entry is a single file, `src/content/picture/<id>.mdx`, named and numbered like an article. An entry holds one illustration or a set of them. The list at `/picture/` shows a square thumbnail cropped from the center; the page at `/picture/<id>/` shows the first image at the width of the text column, and a button opens the rest below it. Every image carries its number in the set, and one switch fits them all to the height of the window.
+Each entry is a single file, `src/content/art/<id>.mdx`, named and numbered like an article. An entry holds one illustration or a set of them. The list at `/art/` shows a square thumbnail cropped from the center; the page at `/art/<id>/` shows the first image at the width of the text column, and a button opens the rest below it. Every image carries its number in the set, and one switch fits them all to the height of the window.
 
 | Field | Required | Description |
 | --- | --- | --- |
 | `title` | yes | Title of the entry |
+| `description` | | One or two sentences, shown under the title and given to the feed |
 | `pubDate` | yes | Publication date. The list is sorted by it, newest first |
 | `cover` | yes | The thumbnail of the list, and the picture a link preview shows. An empty or unknown name shows an empty frame |
 | `images` | | The images of the entry, shown in this order. The first one is the one the page opens with |
 
-The body of the file is the description, shown under the first image, and in the right margin once the rest are open. It may be left empty, and is MDX like an article, except that `Fig` is not available: the images of an entry are the list above.
+Nothing goes in the body of the file: an entry is the fields above.
 
 `npm run img apply` fills both lines in. It appends every name it assigns that the entry does not list yet, in the order the file names sort, and never reorders and never removes. So a set is arranged by naming the files `01`, `02`, … and rearranged afterwards by moving lines. To drop an image, delete its line and run `npm run img gc`.
 
@@ -125,7 +126,7 @@ Images are grouped into areas, defined in one table (`AREAS` in `src/images/conf
 | --- | --- | --- |
 | home | `home/` | `cover` |
 | journal | `journal/<id>/` | `figure`, `cover` |
-| picture | `picture/<id>/` | `art`, `cover` |
+| art | `art/<id>/` | `art`, `cover` |
 | work | `work/<id>/` | `cover` |
 
 
@@ -159,7 +160,7 @@ To replace an image, add the new version (it gets a new name), update the refere
 | In both, same content | Nothing |
 | In the manifest, objects missing in R2 | Re-upload from the local copy if it matches, otherwise report an error |
 
-`gc` runs only when everything is in sync. It deletes, from both buckets and from `r2-clone/`, every image whose key appears nowhere: not in any article, picture or work entry, and not in any source file under `src/`. Images of deleted articles or entries are included. It also deletes, from the buckets alone, every object that no image in the manifest claims any more, such as the variants left behind by a width list that changed. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
+`gc` runs only when everything is in sync. It deletes, from both buckets and from `r2-clone/`, every image whose key appears nowhere: not in any article, art or work entry, and not in any source file under `src/`. Images of deleted articles or entries are included. It also deletes, from the buckets alone, every object that no image in the manifest claims any more, such as the variants left behind by a width list that changed. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
 
 ### Adding an area
 

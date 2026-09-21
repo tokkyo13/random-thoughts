@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import SiteHeader from '../components/SiteHeader.astro';
-import { JOURNAL_FEED_TITLE, SITE_LANG, SITE_TITLE } from '../consts';
+import { SITE_LANG, SITE_TITLE } from '../consts';
 
 interface Props {
   title?: string;
@@ -37,8 +37,8 @@ const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
     <link
       rel="alternate"
       type="application/rss+xml"
-      title={JOURNAL_FEED_TITLE}
-      href="/journal/rss.xml"
+      title={SITE_TITLE}
+      href="/rss.xml"
     />
   </head>
   <body class:list={{ home: isHome, railed: hasToc || hasControls }}>

@@ -165,13 +165,19 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
     top: 0;
     bottom: 0;
     left: 0;
+    /* What the labels keep clear of the line down the rail, as the TOC keeps the same */
+    --line-gap: 1rem;
+
     width: var(--rail-width);
-    padding: var(--page-top) 0 0 var(--gutter);
+    padding: var(--page-top) var(--line-gap) 0 var(--gutter);
     border-right: var(--rule);
   }
 
   .brand {
     display: flex;
+    justify-content: flex-end;
+    /* Halfway into the gap the labels keep, so the mark sits between the two of them */
+    margin-right: calc(var(--line-gap) / -2);
     text-decoration: none;
   }
 
@@ -184,31 +190,35 @@ const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
   .rail ul {
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     gap: var(--nav-gap);
     margin-top: var(--nav-offset);
   }
 
   /* The colors come from .nav-list in global.css; the mark for the page you are on is this
-     rail's own, and it is the one a link in an article carries. .nav-list clears the
-     decoration a link starts with, so all of it is set again here */
+     rail's own */
   .rail nav a {
     display: block;
-    padding-left: 0.25rem; /* off the logo, which starts at the edge of the rail */
+    position: relative;
     letter-spacing: var(--ls-wide);
   }
 
-  .rail nav a[aria-current='page'] {
-    text-decoration-line: underline;
-    text-decoration-color: var(--accent);
-    text-decoration-thickness: var(--underline);
-    text-underline-offset: 0.25em;
+  /* A line standing against the one down the rail, in the gap the labels already keep from
+     it, so the label itself stays put */
+  .rail nav a[aria-current='page']::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: calc(var(--line-gap) * -1);
+    border-right: calc(var(--underline) * 1.5) solid var(--accent);
   }
 
   .menu {
     display: none;
   }
 
-  /* No room for the rails (see --frame-width in global.css): one button takes over */
+  /* No room for the rails (see the rails in global.css): one button takes over */
   @media (max-width: 85rem) {
     .rail {
       display: none;

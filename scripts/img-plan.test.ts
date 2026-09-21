@@ -118,8 +118,8 @@ test('variant widths never exceed the original', () => {
   assert.deepEqual(variantWidths(J, 'figure', 300), [300]);
 });
 
-test('a picture item without a cover has its first image copied to one', () => {
-  const P = 'picture/1789139909';
+test('an art item without a cover has its first image copied to one', () => {
+  const P = 'art/1789139909';
   const local = [file(P, '02.png', OTHER), file(P, '01.png'), file(P, 'notes.txt')];
   const plan = planSync(local, { images: {} }, new Map());
   // Names are listed in file-name order, so 01.png leads and gives the cover its bytes
@@ -129,8 +129,8 @@ test('a picture item without a cover has its first image copied to one', () => {
   ]);
 });
 
-test('a cover already on disk or in the manifest is not copied again, and only picture gets one', () => {
-  const P = 'picture/1789139909';
+test('a cover already on disk or in the manifest is not copied again, and only art gets one', () => {
+  const P = 'art/1789139909';
   const named = [file(P, 'cover.png'), file(P, '01.png', OTHER)];
   assert.deepEqual(planCovers(named, planSync(named, { images: {} }, new Map()), { images: {} }), []);
 

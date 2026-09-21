@@ -1,39 +1,39 @@
 ---
-import { listPictures, pictureUrl } from '../../pictures';
+import { listArt, artUrl } from '../../art';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/PageHeader.astro';
 import Pager from '../../components/Pager.astro';
 import { optionalImage, SIZES } from '../../images';
 import { PER_PAGE } from '../../consts';
 
-// /picture/  /picture/2/
+// /art/  /art/2/
 export async function getStaticPaths() {
-  const pictures = await listPictures();
-  const count = Math.max(1, Math.ceil(pictures.length / PER_PAGE));
-  const urls = Array.from({ length: count }, (_, i) => (i === 0 ? '/picture/' : `/picture/${i + 1}/`));
+  const pieces = await listArt();
+  const count = Math.max(1, Math.ceil(pieces.length / PER_PAGE));
+  const urls = Array.from({ length: count }, (_, i) => (i === 0 ? '/art/' : `/art/${i + 1}/`));
 
   return urls.map((_, i) => ({
     params: { page: i === 0 ? undefined : String(i + 1) },
-    props: { pictures: pictures.slice(i * PER_PAGE, (i + 1) * PER_PAGE), total: pictures.length, page: i + 1, urls },
+    props: { pieces: pieces.slice(i * PER_PAGE, (i + 1) * PER_PAGE), total: pieces.length, page: i + 1, urls },
   }));
 }
 
-const { pictures, total, page, urls } = Astro.props;
+const { pieces, total, page, urls } = Astro.props;
 ---
 
-<BaseLayout title="Picture" description="描いたイラストの一覧">
-  <PageHeader title="Picture" lead={`${total} 枚のイラスト`} />
+<BaseLayout title="Art" description="描いたイラストの一覧">
+  <PageHeader title="Art" lead={`${total} 枚のイラスト`} />
 
   {
-    pictures.length === 0 ? (
+    pieces.length === 0 ? (
       <p class="entry-empty">まだイラストがありません</p>
     ) : (
       <ul class="card-grid">
-        {pictures.map(({ id, data }) => {
-          const cover = optionalImage(data.cover && `picture/${id}/${data.cover}`);
+        {pieces.map(({ id, data }) => {
+          const cover = optionalImage(data.cover && `art/${id}/${data.cover}`);
           return (
             <li>
-              <a class="card" href={pictureUrl(id)}>
+              <a class="card" href={artUrl(id)}>
                 <div class="thumb">{cover && <img {...cover} sizes={SIZES.gridThumb} alt="" />}</div>
                 <h2 class="entry-title">{data.title}</h2>
               </a>

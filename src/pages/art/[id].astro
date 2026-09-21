@@ -1,37 +1,29 @@
 ---
-import { render } from 'astro:content';
-import { listPictures } from '../../pictures';
+import { listArt } from '../../art';
 import { optionalImage, shareImage } from '../../images';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Shot from '../../components/Shot.astro';
 import Controls from '../../components/Controls.astro';
-import Note from '../../components/Note.astro';
-import ProseLink from '../../components/ProseLink.astro';
-import Code from '../../components/Code.astro';
-import Pre from '../../components/Pre.astro';
 
 export async function getStaticPaths() {
-  return (await listPictures()).map((picture) => ({
-    params: { id: picture.id },
-    props: { picture },
+  return (await listArt()).map((piece) => ({
+    params: { id: piece.id },
+    props: { piece },
   }));
 }
 
-const { picture } = Astro.props;
-const { title } = picture.data;
-const { Content } = await render(picture);
-const coverKey = picture.data.cover && `picture/${picture.id}/${picture.data.cover}`;
+const { piece } = Astro.props;
+const { title, description } = piece.data;
+const coverKey = piece.data.cover && `art/${piece.id}/${piece.data.cover}`;
 // A name with no image yet is left out, so the rest of the entry still shows
-const shots = picture.data.images.flatMap(
-  (name, i) => optionalImage(`picture/${picture.id}/${name}`, i === 0 ? 'eager' : 'lazy') ?? [],
+const shots = piece.data.images.flatMap(
+  (name, i) => optionalImage(`art/${piece.id}/${name}`, i === 0 ? 'eager' : 'lazy') ?? [],
 );
 const [first, ...rest] = shots;
-// The body is the description, and it is optional; an empty one leaves the gap out
-const hasDescription = Boolean(picture.body?.trim());
 ---
 
-<BaseLayout title={title} image={shareImage(coverKey)} hasControls>
+<BaseLayout title={title} description={description} image={shareImage(coverKey)} hasControls>
   {
     /* The margin is gone on a narrow viewport, so the menu carries the same controls there.
        Only one of the two copies is ever on screen */
@@ -48,19 +40,13 @@ const hasDescription = Boolean(picture.body?.trim());
     <div class="side">
       <header class="item-head">
         <p>
-          <FormattedDate date={picture.data.pubDate} />
+          <FormattedDate date={piece.data.pubDate} />
         </p>
 
         <h1>{title}</h1>
       </header>
 
-      {
-        hasDescription && (
-          <div class="prose">
-            <Content components={{ Note, Code, pre: Pre, a: ProseLink }} />
-          </div>
-        )
-      }
+      {description && <p class="description">{description}</p>}
 
       <div class="side-controls"><Controls /></div>
     </div>
@@ -203,11 +189,13 @@ const hasDescription = Boolean(picture.body?.trim());
     display: none;
   }
 
-  .prose {
-    margin-top: var(--item-gap);
+  .description {
+    margin: var(--item-gap) 0 0;
+    letter-spacing: var(--ls-prose);
+    line-height: var(--lh-relaxed);
   }
 
-  /* Room for the margins (see --frame-width in global.css), and the width at which the nav
+  /* Room for the margins (see the rails in global.css), and the width at which the nav
      rail takes the menu back */
   @media (width > 85rem) {
     /* The pictures take the whole middle, which is what the rails leave of the page */

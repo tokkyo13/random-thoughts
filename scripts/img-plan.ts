@@ -21,7 +21,7 @@ export type SyncPlan = {
   warnings: string[];
   errors: string[];
   // Image directory -> its image names, in the order the local file names sort. It is the
-  // order a picture entry lists its images in, and the order the first image is picked in.
+  // order an art entry lists its images in, and the order the first image is picked in.
   order: Map<string, string[]>;
 };
 

@@ -56,13 +56,9 @@
      It follows --gutter, so the margin above the content matches the one beside it */
   --page-top: var(--gutter);
   /* The margin columns, the same width on both sides: the nav rail on the left, the TOC of
-     an article or the controls of a picture on the right. Measured from the edge of the
+     an article or the controls of an art entry on the right. Measured from the edge of the
      screen inwards, which is where the frame lines stand and where the middle begins */
   --rail-width: 16rem;
-  /* The narrowest the two margins fit into. Below it they give way to the menu button, and
-     the middle takes the whole page. The media queries in SiteHeader.astro, journal/[id],
-     picture/[id] and index.astro repeat the number; media queries cannot read variables */
-  --frame-width: 85rem;
   /* For overlays that float above the page. The palette is dark, so plain black */
   --shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.35);
   /* Corners, smallest first: inline marks, panels and controls, the avatar, and
@@ -167,7 +163,9 @@ b {
 
 /* The rails take their width out of the page, so nothing of the middle runs under them. The
    nav rail is always there; the right one only on a page that fills it, and a page without
-   takes that room for its middle instead. Either way the middle centres what it holds */
+   takes that room for its middle instead. Either way the middle centres what it holds.
+   85rem is the width they start at: SiteHeader.astro, journal/[id], art/[id] and index.astro
+   repeat the number, because a media query cannot read a variable */
 @media (width > 85rem) {
   body:not(.home) {
     padding-left: var(--rail-width);
@@ -375,7 +373,7 @@ b {
 /* =========================================================
    Shared parts
    ========================================================= */
-/* Journal, Work and Picture share these */
+/* Journal, Work and Art share these */
 .entry-empty {
   color: var(--text-muted);
 }
@@ -394,7 +392,7 @@ b {
   object-fit: cover;
 }
 
-/* A grid of cards, each one link: Work and Picture. The list sets the thumbnail's ratio */
+/* A grid of cards, each one link: Work and Art. The list sets the thumbnail's ratio */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

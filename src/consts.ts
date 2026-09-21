@@ -6,16 +6,15 @@ export const AUTHOR = { name: '特許13', latin: 'tokkyo13' };
 export const SOURCE_URL = 'https://github.com/tokkyo13/random-thoughts';
 
 export const SITE_DESCRIPTION = `${AUTHOR.name}の個人サイトです。`;
-export const JOURNAL_FEED_TITLE = `Journal | ${SITE_TITLE}`;
 
 export const NAV_ITEMS = [
   { label: 'Home', href: '/' },
   { label: 'Journal', href: '/journal/' },
-  { label: 'Picture', href: '/picture/' },
+  { label: 'Art', href: '/art/' },
   { label: 'Work', href: '/work/' },
   { label: 'Link', href: '/link/' },
   { label: 'About', href: '/about/' },
 ] as const;
 
-// Entries per list page, in Journal, Work and Picture. It caps the thumbnails one page loads.
+// Entries per list page, in Journal, Work and Art. It caps the thumbnails one page loads.
 export const PER_PAGE = 30;

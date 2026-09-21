@@ -32,10 +32,11 @@ const work = defineCollection({
 
 // One illustration per file, laid out like an article: the body is the description, and it is
 // the only optional part. The file name (unix seconds) is the id, the URL and the image directory.
-const picture = defineCollection({
-  loader: glob({ base: './src/content/picture', pattern: '*.mdx' }),
+const art = defineCollection({
+  loader: glob({ base: './src/content/art', pattern: '*.mdx' }),
   schema: z.object({
     title: z.string(),
+    description: z.string().optional(),
     pubDate: z.coerce.date(),
     // The thumbnail of the list and the picture a link preview reads. It is a copy of the
     // first image unless one is named; "npm run img apply" makes it.
@@ -46,4 +47,4 @@ const picture = defineCollection({
   }).strict(),
 });
 
-export const collections = { journal, work, picture };
+export const collections = { journal, work, art };
