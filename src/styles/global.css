@@ -87,6 +87,8 @@
   --icon: 1.25rem; /* an inline icon, square */
   --control: 2rem; /* a square control under a pointer */
   --control-touch: 2.75rem; /* 44px, the least a thumb can aim at */
+  /* The menu button floating in the corner on narrow screens: its distance from the bottom */
+  --float-bottom: max(var(--gutter), env(safe-area-inset-bottom));
 }
 
 /* =========================================================
@@ -159,6 +161,9 @@ b {
   max-width: var(--page-width);
   margin-inline: auto;
   padding: var(--page-top) var(--gutter);
+  /* Room for the floating menu button with a gutter above it, so the end of the page scrolls
+     clear of it. The same on every width, where the button is not there too */
+  padding-bottom: calc(var(--float-bottom) + var(--control-touch) + var(--gutter));
 }
 
 /* The rails take their width out of the page, so nothing of the middle runs under them. The
