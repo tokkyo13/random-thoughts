@@ -81,7 +81,7 @@ const [first, ...rest] = shots;
   // back against the top edge. The browser has its own scroll anchoring turned off (see the
   // style below), so this is the only thing that moves the view.
   const fit = document.querySelector<HTMLInputElement>('#fit');
-  const gallery = document.querySelector('.gallery');
+  const gallery = document.querySelector<HTMLElement>('.gallery');
 
   if (fit && gallery) {
     let anchor: Element | null = null;
@@ -113,6 +113,20 @@ const [first, ...rest] = shots;
         scrollBy(0, anchor.getBoundingClientRect().top); // reading the rectangle settles the new layout
       }
       settled = scrollY;
+    });
+
+    // With the rest out, a set is paged through on the pictures themselves: the lower half of
+    // one goes on to the next, the upper half back to the one before. Each lands the way the
+    // switch leaves a picture, its top against the top edge
+    gallery.addEventListener('click', (event) => {
+      const frame = (event.target as Element).closest('.frame');
+      if (!frame || !gallery.querySelector('.more[open]')) return;
+
+      const frames = [...gallery.querySelectorAll('.frame')];
+      const box = frame.getBoundingClientRect();
+      const step = event.clientY < box.top + box.height / 2 ? -1 : 1;
+      const to = frames[frames.indexOf(frame) + step];
+      if (to) scrollBy(0, to.getBoundingClientRect().top);
     });
   }
 </script>
