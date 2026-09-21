@@ -15,15 +15,15 @@ export async function getStaticPaths() {
 
   return urls.map((_, i) => ({
     params: { page: i === 0 ? undefined : String(i + 1) },
-    props: { posts: posts.slice(i * PER_PAGE, (i + 1) * PER_PAGE), total: posts.length, page: i + 1, urls },
+    props: { posts: posts.slice(i * PER_PAGE, (i + 1) * PER_PAGE), page: i + 1, urls },
   }));
 }
 
-const { posts, total, page, urls } = Astro.props;
+const { posts, page, urls } = Astro.props;
 ---
 
 <BaseLayout title="Journal" description="これまでに書いた記事の一覧">
-  <PageHeader title="Journal" lead={`${total} 件の記事`} />
+  <PageHeader title="Journal" />
 
   {
     posts.length === 0 ? (
@@ -65,11 +65,15 @@ const { posts, total, page, urls } = Astro.props;
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  /* Rules between entries only, as in .card-grid */
+  .entry-list > li + li {
     border-top: var(--rule);
   }
 
-  .entry-list > li {
-    border-bottom: var(--rule);
+  .entry-list > li:first-child > .entry-link {
+    padding-top: 0;
   }
 
   .entry-link {

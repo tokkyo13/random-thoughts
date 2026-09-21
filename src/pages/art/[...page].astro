@@ -14,15 +14,15 @@ export async function getStaticPaths() {
 
   return urls.map((_, i) => ({
     params: { page: i === 0 ? undefined : String(i + 1) },
-    props: { pieces: pieces.slice(i * PER_PAGE, (i + 1) * PER_PAGE), total: pieces.length, page: i + 1, urls },
+    props: { pieces: pieces.slice(i * PER_PAGE, (i + 1) * PER_PAGE), page: i + 1, urls },
   }));
 }
 
-const { pieces, total, page, urls } = Astro.props;
+const { pieces, page, urls } = Astro.props;
 ---
 
 <BaseLayout title="Art" description="描いたイラストの一覧">
-  <PageHeader title="Art" lead={`${total} 枚のイラスト`} />
+  <PageHeader title="Art" />
 
   {
     pieces.length === 0 ? (

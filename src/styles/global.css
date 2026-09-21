@@ -401,6 +401,8 @@ b {
   margin: 0;
   padding: 0;
   list-style: none;
+  /* Leaves one rule gap below the last row, as .entry-list does, whatever row is last */
+  margin-bottom: calc(var(--rule-gap) * -1);
   /* Clips the rule above the first row and the overhang past the edge columns, so no
      :nth-child cases per column count are needed.
      Tradeoff: :focus-visible on the edge columns loses its outer side; if that matters,
