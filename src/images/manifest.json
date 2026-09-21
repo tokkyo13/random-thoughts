@@ -1,5 +1,17 @@
 {
   "images": {
+    "art/1789937537/art-e573fcbb": {
+      "width": 1792,
+      "height": 1008,
+      "size": 55211,
+      "md5": "9ae3aa2d7b1a64a0bab99a600664e943",
+      "source": "e573fcbb5fa91d54e2ac7be6a3aeb7e5",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
     "art/1789937537/cover-e573fcbb": {
       "width": 1792,
       "height": 1008,

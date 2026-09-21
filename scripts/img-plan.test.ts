@@ -146,6 +146,17 @@ test('an art item without a cover has its first image copied to one', () => {
   ]);
 });
 
+test('an art item with a cover and no art is an error, on disk or in the manifest', () => {
+  const P = 'art/1789139909';
+  assert.match(planSync([file(P, 'cover.png')], { images: {} }, new Map()).errors[0], /a cover alone/);
+  const manifest = { images: { [`${P}/cover-a1b2c3d4`]: entry } };
+  assert.match(planSync([], manifest, new Map()).errors.at(-1)!, /a cover alone/);
+  // An art image beside it, even one only now being added, makes it whole
+  assert.deepEqual(planSync([file(P, '01.png', OTHER)], manifest, new Map()).errors.filter((e) => /alone/.test(e)), []);
+  // Other areas have covers of their own
+  assert.deepEqual(planSync([file('work/1789139901', 'cover.png')], { images: {} }, new Map()).errors, []);
+});
+
 test('a cover already on disk or in the manifest is not copied again, and only art gets one', () => {
   const P = 'art/1789139909';
   const named = [file(P, 'cover.png'), file(P, '01.png', OTHER)];

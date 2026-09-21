@@ -140,6 +140,17 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
   if (unknown.length > 0) {
     plan.warnings.push(`${unknown.length} object(s) on R2 that no image claims; "npm run img gc" deletes them`);
   }
+  // In an autoCover area a cover is a copy of an image or named beside them, never alone
+  const stemsByDir = new Map(plan.order);
+  for (const key of Object.keys(manifest.images)) {
+    const [dir, stem] = splitKey(key);
+    stemsByDir.set(dir, [...(stemsByDir.get(dir) ?? []), stem]);
+  }
+  for (const [dir, stems] of stemsByDir) {
+    if (AREAS[areaOf(dir)!].autoCover && stems.every((s) => s.startsWith(`${SHARE_TYPE}-`))) {
+      plan.errors.push(`${dir}/  a cover alone; add the images it covers, named without "${SHARE_TYPE}"`);
+    }
+  }
   if (plan.imported.length > 0) {
     plan.warnings.push(`${plan.imported.length} file(s) in r2-clone/ already made into AVIF; "npm run img gc" deletes them`);
   }

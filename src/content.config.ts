@@ -43,7 +43,8 @@ const art = defineCollection({
     cover: imageName,
     // Every image of the entry, shown in this order. The tool appends the names it assigns,
     // so editing this list is what changes the order.
-    images: z.array(imageName).default([]),
+    // Only art: the cover is a copy of one of them or named beside them, never one of the set.
+    images: z.array(imageName.startsWith('art-', 'an art entry lists art images; the cover goes in "cover"')).default([]),
   }).strict(),
 });
 
