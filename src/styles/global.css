@@ -77,13 +77,13 @@
   --block-gap: 1.6em; /* between the blocks of an article */
   --list-gap: 0.4em; /* between the rows of one list */
   --nav-gap: 0.6rem; /* between nav rows */
-  --nav-offset: 1.75rem; /* the logo down to the first nav row */
+  --nav-offset: 1.75rem; /* the logo down to the first nav row, and a page title to its body */
   --rule-gap: 1.75rem; /* between a rule and the content it divides */
   --title-gap: 0.6rem; /* a title down to whatever follows it */
   --item-gap: 1.25rem; /* between the parts of one item, and between the controls of one row */
   --col-gap: 2rem; /* between blocks set side by side */
   --section-gap: 2.5rem; /* before the part that closes a page */
-  --header-gap: clamp(2rem, 5vw, 3rem); /* a page or article header down to its body */
+  --header-gap: clamp(2rem, 5vw, 3rem); /* an article header down to its body */
   --icon: 1.25rem; /* an inline icon, square */
   --control: 2rem; /* a square control under a pointer */
   --control-touch: 2.75rem; /* 44px, the least a thumb can aim at */

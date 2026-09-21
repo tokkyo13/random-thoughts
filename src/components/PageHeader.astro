@@ -12,15 +12,23 @@ const { title } = Astro.props;
 </div>
 
 <style>
+  /* Laid out as the rail's logo is: as tall as the logo, then the same gap, so the title sits
+     level with the logo and the body starts level with the first nav row */
   .page-header {
-    margin-bottom: var(--header-gap);
+    display: flex;
+    align-items: center;
+    min-height: var(--logo-height);
+    margin-bottom: var(--nav-offset);
   }
 
+  /* Trimmed to cap height and baseline, so the letters themselves, not the line box, sit in
+     the middle. Browsers without text-box center the line box instead */
   .page-title {
     margin: 0;
     font-size: var(--fs-xl);
     font-weight: 600;
     letter-spacing: var(--ls-title);
     line-height: var(--lh-title);
+    text-box: trim-both cap alphabetic;
   }
 </style>
