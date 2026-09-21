@@ -409,7 +409,7 @@ b {
   list-style: none;
   /* Leaves one rule gap below the last row, as .entry-list does, whatever row is last */
   margin-bottom: calc(var(--rule-gap) * -1);
-  /* Clips the rule above the first row and the overhang past the edge columns, so no
+  /* Clips the rule above the first row and the overhang past the right edge, so no
      :nth-child cases per column count are needed.
      Tradeoff: :focus-visible on the edge columns loses its outer side; if that matters,
      drop overflow and cancel the edges with :nth-child per column count */
@@ -422,13 +422,14 @@ b {
   padding-bottom: calc(var(--rule-gap) * 2);
 }
 
-/* Extends by half the column gap on each side, so neighboring rules join into one line */
+/* Runs on to the grid's right edge, so a row's rules join into one line that also spans the
+   empty cells after a short last row */
 .card-grid > li::before {
   content: '';
   position: absolute;
   top: calc(var(--rule-gap) * -1);
-  left: calc(var(--col-gap) / -2);
-  right: calc(var(--col-gap) / -2);
+  left: 0;
+  right: -100vw;
   border-top: var(--rule);
 }
 
