@@ -321,33 +321,34 @@ b {
   padding: 0;
 }
 
-/* Code block scrollbars on the block's own ground. The guard is for Chromium, which ignores
-   every ::-webkit-scrollbar rule once scrollbar-color is set on the element. Firefox keeps
-   the default width: "thin" comes out thinner than the webkit bar */
+/* One scrollbar for every scroller, the page included, each on its own ground. The guard is
+   for Chromium, which ignores every ::-webkit-scrollbar rule once scrollbar-color is set.
+   Firefox keeps the default width: "thin" comes out thinner than the webkit bar */
 @supports not selector(::-webkit-scrollbar) {
-  .prose pre {
-    scrollbar-color: var(--border) var(--code-bg);
+  :root {
+    scrollbar-color: var(--border) transparent; /* inherited, so it reaches every scroller */
   }
 }
 
-.prose pre::-webkit-scrollbar {
+::-webkit-scrollbar {
   width: var(--scrollbar);
   height: var(--scrollbar);
 }
 
-.prose pre::-webkit-scrollbar-track {
-  background: var(--code-bg);
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 /* The transparent border, clipped, leaves a gap around a thinner thumb */
-.prose pre::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: var(--border);
   border: 3px solid transparent;
   background-clip: padding-box;
   border-radius: var(--radius-pill);
 }
 
-.prose pre::-webkit-scrollbar-button {
+::-webkit-scrollbar-button {
   display: none;
 }
 
