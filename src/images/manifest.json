@@ -144,6 +144,174 @@
         1792
       ]
     },
+    "art/1789992322/art-0ca82c89": {
+      "width": 1792,
+      "height": 2495,
+      "size": 138072,
+      "md5": "ab16ff50f74d5cef2e26b2b858388dff",
+      "source": "0ca82c89d636f92ead4ea0aca6223b68",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-151fbc59": {
+      "width": 1792,
+      "height": 2495,
+      "size": 121211,
+      "md5": "9f0499fe0e954a376647d6acab28d275",
+      "source": "151fbc5969229aab4ca59a18a1fb95b2",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-1f7885fa": {
+      "width": 1792,
+      "height": 2495,
+      "size": 136905,
+      "md5": "afcbcdafcc657d7836916f9999670374",
+      "source": "1f7885faef7fd4d4685e834ec77b6a16",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-202a2f66": {
+      "width": 1792,
+      "height": 2495,
+      "size": 258610,
+      "md5": "f094d97d8042939895af267217f9cecb",
+      "source": "202a2f66293d4462542d24cdd3bdfb7e",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-3a8e32ce": {
+      "width": 1792,
+      "height": 2495,
+      "size": 23727,
+      "md5": "08461c2db4a496047dcabbf83e4f3abb",
+      "source": "3a8e32cececed0e60760c69688b2bf74",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-42aeafe1": {
+      "width": 1792,
+      "height": 2495,
+      "size": 110197,
+      "md5": "b06fb02ebf41ea3fb3483784fbe450fa",
+      "source": "42aeafe1af5fe667ba218703d5c4260c",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-45629ce1": {
+      "width": 1792,
+      "height": 2495,
+      "size": 87883,
+      "md5": "d6358964d841a46e4bb35689b8b4dbdf",
+      "source": "45629ce101d32a64ca99e54f4fda690a",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-4e2776dc": {
+      "width": 1792,
+      "height": 2495,
+      "size": 192504,
+      "md5": "3d9ca528dd974d80546bf82386cb78cf",
+      "source": "4e2776dc7ace4b4090acd29c5bbce764",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-5ccc7db9": {
+      "width": 1792,
+      "height": 2495,
+      "size": 137590,
+      "md5": "1cb62a64000c233a57a17f97ba8a14e2",
+      "source": "5ccc7db9253a6de5726277c20b453590",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-62a6fadf": {
+      "width": 1792,
+      "height": 2495,
+      "size": 124353,
+      "md5": "5270b0be25b2462f4c60a39398e398e9",
+      "source": "62a6fadf3935464148261c5dba46b76e",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-7144348b": {
+      "width": 1792,
+      "height": 2495,
+      "size": 141451,
+      "md5": "e7c7b7e8b31dd59a0bb6168c899daad5",
+      "source": "7144348b4eec345c4ebfe2daa01c9c23",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-81c16e85": {
+      "width": 1792,
+      "height": 2495,
+      "size": 199220,
+      "md5": "107b6c52cc6d1836939da8ae62979d45",
+      "source": "81c16e853f1b02255f80add99383efa8",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/art-862f25ca": {
+      "width": 1792,
+      "height": 2495,
+      "size": 172893,
+      "md5": "40b25431f62d37f5413a45590bf8e435",
+      "source": "862f25ca5f7dec455810284c2174fb4a",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1789992322/cover-d982b348": {
+      "width": 1792,
+      "height": 1792,
+      "size": 83233,
+      "md5": "18006b564d0b0403d927426aae85f61a",
+      "source": "d982b348b909d54d5d0804a7b74ed789",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
     "journal/1789204809/cover-e5a86357": {
       "width": 1792,
       "height": 1008,
