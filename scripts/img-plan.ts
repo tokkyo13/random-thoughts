@@ -11,13 +11,15 @@ const IMAGE_NAME = new RegExp(`\\b(?:${TYPES})-${HASH}\\b`, 'g');
 const FULL_KEY = new RegExp(`\\b(?:${DIRS})/(?:${TYPES})-${HASH}\\b`, 'g');
 
 export type LocalFile = { dir: string; name: string; md5: string; size: number };
-export type Upload = { dir: string; from: string; stem: string; ext: string; md5: string; size: number };
+// Made from "from": a dropped-in file for an upload, the AVIF in r2-clone/ for a repair.
+export type Upload = { dir: string; from: string; stem: string; md5: string };
 export type Download = { key: string; entry: ImageEntry };
 
 export type SyncPlan = {
   uploads: Upload[]; // not in the manifest
   repairs: Upload[]; // in the manifest, objects missing on R2
   downloads: Download[]; // in the manifest, missing in r2-clone/
+  imported: LocalFile[]; // files an AVIF in r2-clone/ was made from; gc deletes them
   warnings: string[];
   errors: string[];
   // Image directory -> its image names, in the order the local file names sort. It is the
@@ -46,15 +48,17 @@ export function areaOf(dir: string): string | undefined {
 
 const typesOf = (dir: string) => Object.keys(AREAS[areaOf(dir)!].types);
 
+/** The listed widths below the largest, then the largest: the image's own width, capped by the last. */
 export function variantWidths(dir: string, type: string, width: number): number[] {
-  const fits = (AREAS[areaOf(dir)!].types[type] ?? []).filter((w) => w <= width);
-  return fits.length > 0 ? fits : [width];
+  const list = AREAS[areaOf(dir)!].types[type] ?? [];
+  const top = list.length > 0 ? Math.min(width, list.at(-1)!) : width;
+  return [...list.filter((w) => w < top), top];
 }
 
-/** The original first, then the variants, then the share JPEG a cover carries. */
+/** The variants, largest first, then the share JPEG a cover carries. */
 export function objectKeys(key: string, entry: ImageEntry): string[] {
   const share = shareKey(key);
-  return [`${key}.${entry.ext}`, ...entry.variants.map((w) => variantKey(key, w)), ...(share ? [share] : [])];
+  return [...entry.variants.toReversed().map((w) => variantKey(key, w)), ...(share ? [share] : [])];
 }
 
 function normalizeExt(name: string): string {
@@ -63,7 +67,7 @@ function normalizeExt(name: string): string {
 }
 
 export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<string, number>): SyncPlan {
-  const plan: SyncPlan = { uploads: [], repairs: [], downloads: [], warnings: [], errors: [], order: new Map() };
+  const plan: SyncPlan = { uploads: [], repairs: [], downloads: [], imported: [], warnings: [], errors: [], order: new Map() };
   const localByKey = new Map<string, LocalFile>();
 
   for (const file of [...local].sort((a, b) => `${a.dir}/${a.name}`.localeCompare(`${b.dir}/${b.name}`))) {
@@ -76,13 +80,24 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
       plan.errors.push(`${file.dir}/  unsupported format, use ${[...EXTS].join(' ')}  <- ${file.name}`);
       continue;
     }
-    // A file in the manifest keeps its recorded name, even an old-style one. Any other file is
-    // named after its content, under the type its name starts with, else the area's first type.
+    // The AVIF of an image in the manifest keeps its recorded name, even an old-style one. Any
+    // other file is named after its content, under the type its name starts with, else the
+    // area's first type.
     const named = file.name.slice(0, file.name.lastIndexOf('.'));
+    const recorded = ext === 'avif' ? manifest.images[`${file.dir}/${named}`] : undefined;
+    if (recorded && recorded.md5 !== file.md5) {
+      // Downloading the recorded image would land on this file
+      plan.errors.push(`${file.dir}/${named}  edited in place, save the edit under another name  <- ${file.name}`);
+      continue;
+    }
     const types = typesOf(file.dir);
     const type = types.find((t) => file.name.toLowerCase().startsWith(t)) ?? types[0];
-    const stem = manifest.images[`${file.dir}/${named}`]?.md5 === file.md5 ? named : `${type}-${file.md5.slice(0, NAME_HASH)}`;
+    const stem = recorded ? named : `${type}-${file.md5.slice(0, NAME_HASH)}`;
     const key = `${file.dir}/${stem}`;
+    if (!recorded && manifest.images[key]?.source === file.md5) {
+      plan.imported.push(file);
+      continue;
+    }
     if (localByKey.has(key)) {
       plan.errors.push(`${key}  same content as another file here, remove one  <- ${file.name}`);
       continue;
@@ -91,8 +106,8 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
     plan.order.set(file.dir, [...(plan.order.get(file.dir) ?? []), stem]);
     const entry = manifest.images[key];
     if (!entry) {
-      plan.uploads.push({ dir: file.dir, from: file.name, stem, ext, md5: file.md5, size: file.size });
-    } else if (entry.md5 !== file.md5) {
+      plan.uploads.push({ dir: file.dir, from: file.name, stem, md5: file.md5 });
+    } else if (!recorded) {
       // Two MD5s sharing their first NAME_HASH digits. Practically never.
       plan.errors.push(`${key}  name taken by a different image, re-export this one  <- ${file.name}`);
     }
@@ -104,13 +119,13 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
     keys.forEach((k) => known.add(k));
     const file = localByKey.get(key);
     const missing = keys.filter((k) => !remote.has(k));
-    const original = keys[0];
-    if (remote.has(original) && remote.get(original) !== entry.size) {
+    const largest = keys[0];
+    if (remote.has(largest) && remote.get(largest) !== entry.size) {
       plan.errors.push(`${key}  size on R2 does not match src/images/manifest.json`);
     } else if (missing.length > 0) {
-      if (file && file.md5 === entry.md5) {
+      if (file) {
         const [dir, stem] = splitKey(key);
-        plan.repairs.push({ dir, from: file.name, stem, ext: entry.ext, md5: file.md5, size: file.size });
+        plan.repairs.push({ dir, from: file.name, stem, md5: file.md5 });
       } else {
         plan.errors.push(`${key}  ${missing.length} object(s) missing on R2 and no matching local copy`);
       }
@@ -124,6 +139,9 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
   const unknown = [...remote.keys()].filter((k) => !known.has(k) && !pendingPrefixes.some((p) => k.startsWith(p)));
   if (unknown.length > 0) {
     plan.warnings.push(`${unknown.length} object(s) on R2 that no image claims; "npm run img gc" deletes them`);
+  }
+  if (plan.imported.length > 0) {
+    plan.warnings.push(`${plan.imported.length} file(s) in r2-clone/ already made into AVIF; "npm run img gc" deletes them`);
   }
 
   return plan;
@@ -209,7 +227,7 @@ export function collectRefs(items: Items, sources: string[]): Set<string> {
 }
 
 /**
- * Objects in the buckets that no image in the manifest claims: what a width list or a format
+ * Objects in the bucket that no image in the manifest claims: what a width list or a format
  * that changed leaves behind. They are unreachable from any page, and gc deletes them.
  */
 export function planStrays(manifest: Manifest, remote: Map<string, number>): string[] {

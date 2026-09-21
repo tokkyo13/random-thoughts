@@ -2,7 +2,7 @@
 
 Source of a personal website built with [Astro](https://astro.build) and MDX. The output is a fully static site.
 
-Images are kept out of Git. Originals and their web variants live in Cloudflare R2, a local working copy lives in `r2-clone/`, and the site build reads only a small manifest committed to the repository.
+Images are kept out of Git. Their web variants live in Cloudflare R2, a local working copy of the largest ones lives in `r2-clone/`, and the site build reads only a small manifest committed to the repository.
 
 ## Requirements
 
@@ -35,7 +35,7 @@ src/
   layouts/  pages/  styles/
   consts.ts           site-wide constants
   content.config.ts   content schemas
-  images/             areas, widths, buckets and origin (config.ts); the manifest
+  images/             areas, widths, bucket and origin (config.ts); the manifest
                       (manifest.json); image(), which resolves a key to <img>
                       attributes (index.ts)
 scripts/
@@ -43,7 +43,7 @@ scripts/
   img-plan.ts         its pure planning logic, tested by img-plan.test.ts
   new.ts              creates articles, art entries and work entries
 creds/                r2.env (not in Git) and its template
-r2-clone/             local copy of the original images, not in Git
+r2-clone/             local copy of the largest variant of each image, not in Git
 ```
 
 Each kind of definition has one home: image areas in `src/images/config.ts`, content schemas in `src/content.config.ts`, site-wide constants in `src/consts.ts`, and shared page parts in `src/components/`.
@@ -130,37 +130,39 @@ Images are grouped into areas, defined in one table (`AREAS` in `src/images/conf
 | work | `work/<id>/` | `cover` |
 
 
-Every image is named `<type>-<hash>`, such as `figure-a3f91c2b`, where the hash is the first eight hex digits of the MD5 of the original. The sync tool derives the name from the file itself, so nothing has to be reserved in advance: uploading the same picture twice, whether as a preview or after a detour, always lands on the same name. References never include the file extension.
+Every image is named `<type>-<hash>`, such as `figure-a3f91c2b`, where the hash is the first eight hex digits of the MD5 of the file it was made from. The sync tool derives the name from the file itself, so nothing has to be reserved in advance: uploading the same picture twice, whether as a preview or after a detour, always lands on the same name. References never include the file extension.
 
 ### Storage
 
-- **Originals** go to a private bucket under `<dir>/<name>.<ext>`. They are stored unchanged, metadata included, which is why the bucket stays private.
-- **Variants** go to a public bucket under `<dir>/<name>.<width>w.avif` and are served from the image origin. They are generated locally with sharp as AVIF, carry no metadata, and are never wider than the original. The widths depend on the area and type.
-- **Share images** go to the same public bucket under `<dir>/<name>.share.jpg`. Only covers get one, and only a link preview ever fetches it: the scrapers behind them do not read AVIF, so this is a small JPEG instead. It is not referenced by any page, so a reader never downloads it.
+No original is kept. Everything lives in one public bucket, served from the image origin:
+
+- **Variants** under `<dir>/<name>.<width>w.avif`. They are generated locally with sharp as AVIF and carry no metadata. The widths depend on the area and type. The largest is the image at its own width, capped by the last width listed (1792 at most, which covers an ordinary screen at 2x), and holds all an image has: every smaller variant can be made from it. `r2-clone/` keeps a copy of it as `<name>.avif`.
+- **Share images** under `<dir>/<name>.share.jpg`. Only covers get one, and only a link preview ever fetches it: the scrapers behind them do not read AVIF, so this is a small JPEG instead. It is not referenced by any page, so a reader never downloads it.
 - Both are uploaded with `Cache-Control: public, max-age=31536000, immutable`. Because the name follows from the content, a name can never point at different bytes, and cached copies never go stale.
-- `src/images/manifest.json` records the dimensions, MD5 hash and variant widths of every image. The site build reads only this file and never contacts R2.
+- `src/images/manifest.json` records, for every image, the dimensions and MD5 hash of the largest variant, the MD5 hash of the file it was made from, and the variant widths. The site build reads only this file and never contacts R2.
 
 ### Workflow
 
 1. Put images in the item's directory under `r2-clone/`, with any file name. A name starting with a type, such as `cover.jpg`, selects that type; other files get the area's first type.
-2. Run `npm run img plan` to see the names that will be assigned, then `npm run img apply` to rename the files, upload originals and variants, and update the manifest.
+2. Run `npm run img plan` to see the names that will be assigned, then `npm run img apply` to upload the variants, write `<name>.avif` beside each file, and update the manifest. The files you put in stay where they are until `gc` deletes them.
 3. Reference images by name: `<Fig src="figure-a3f91c2b" />` in an article, `cover: cover-a3f91c2b` in frontmatter or a work entry, or a full key such as `image('home/cover-a3f91c2b')` in a page.
 4. Commit `src/images/manifest.json` together with the content that uses the images.
 
-To replace an image, add the new version (it gets a new name), update the references, and remove the old one with `gc`. Images are never overwritten in place. Editing a file in `r2-clone/` in place amounts to the same thing: its content gives it a new name, and the previous version is restored beside it from R2.
+To replace an image, add the new version (it gets a new name), update the references, and remove the old one with `gc`. Images are never overwritten in place. An AVIF in `r2-clone/` edited in place is an error: save the edit under another name, and it becomes a new image.
 
 ### Sync rules
 
-`plan` and `apply` compare `r2-clone/`, the manifest and the buckets:
+`plan` and `apply` compare `r2-clone/`, the manifest and the bucket:
 
 | State | Action |
 | --- | --- |
-| Only in `r2-clone/` | Upload the original and its variants, record it in the manifest |
-| Only in R2 | Download the original. On a fresh clone, `apply` restores `r2-clone/` |
+| Only in `r2-clone/` | Upload the variants and the share image, keep the largest variant beside the file, record it in the manifest |
+| Only in R2 | Download the largest variant. On a fresh clone, `apply` restores `r2-clone/` |
+| A file the manifest says an image was made from | Nothing; `gc` deletes it |
 | In both, same content | Nothing |
-| In the manifest, objects missing in R2 | Re-upload from the local copy if it matches, otherwise report an error |
+| In the manifest, objects missing in R2 | Make them again from the local copy if it matches, otherwise report an error |
 
-`gc` runs only when everything is in sync. It deletes, from both buckets and from `r2-clone/`, every image whose key appears nowhere: not in any article, art or work entry, and not in any source file under `src/`. Images of deleted articles or entries are included. It also deletes, from the buckets alone, every object that no image in the manifest claims any more, such as the variants left behind by a width list that changed. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
+`gc` runs only when everything is in sync. It deletes, from the bucket and from `r2-clone/`, every image whose key appears nowhere: not in any article, art or work entry, and not in any source file under `src/`. Images of deleted articles or entries are included. It also deletes, from the bucket alone, every object that no image in the manifest claims any more, such as the variants left behind by a width list that changed, and, from `r2-clone/` alone, every file an image was made from. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
 
 ### Adding an area
 
@@ -168,8 +170,8 @@ Add the area to `AREAS` in `src/images/config.ts`. An area with one directory pe
 
 ## Configuration
 
-- **Credentials**: copy `creds/r2.env.example` to `creds/r2.env` and fill in `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` from an R2 API token with Object Read & Write permission on both buckets. Only the sync tool reads them. Credential files are ignored by Git.
-- `src/images/config.ts`: bucket names and the public image origin.
+- **Credentials**: copy `creds/r2.env.example` to `creds/r2.env` and fill in `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` from an R2 API token with Object Read & Write permission on the bucket. Only the sync tool reads them. Credential files are ignored by Git.
+- `src/images/config.ts`: the bucket name and the public image origin.
 - `astro.config.mjs`: the site URL, used for absolute URLs in the feed.
 
 ### Claude Code

@@ -1,12 +1,10 @@
 // Shared by the site (src/images/index.ts) and the sync tool (scripts/img.ts).
 
-// Originals keep their EXIF, GPS included, so only the variants bucket is ever public.
 export const IMAGE_ORIGIN = 'https://img.tokkyo13.net';
-export const VARIANTS_BUCKET = 'random-thoughts-images';
-export const ORIGINALS_BUCKET = 'random-thoughts-images-origin';
+export const BUCKET = 'random-thoughts-images';
 
-// Names are "<type>-<first NAME_HASH hex digits of the MD5>". A name never points at other
-// bytes, which is what makes the immutable cache header safe.
+// Names are "<type>-<first NAME_HASH hex digits of the MD5 of the file it was made from>". A
+// name never points at other bytes, which is what makes the immutable cache header safe.
 export const NAME_HASH = 8;
 
 // Changing the format renames every variant; "npm run img apply" then regenerates them.
@@ -27,11 +25,14 @@ type AreaSpec = {
   // a thumbnail and the page a link preview, and both follow from the name being a cover.
   autoCover?: boolean;
   // Variant widths per type. A new file whose name starts with no type gets the first one.
-  // Editing a list affects only images uploaded afterwards.
+  // The last width caps the image: the largest variant is the image at its own width, up to it,
+  // and is also the copy kept in r2-clone/. Editing a list affects only images uploaded afterwards.
   types: Record<string, number[]>;
 };
 
 // A perItem area also needs an entry in ITEM_SOURCES in scripts/img.ts.
+// 1792 is the most any layout asks for on an ordinary screen: the prose column (56rem) at 2x,
+// and the art page's middle on a 1920px screen (about 1330px) at 1x.
 export const AREAS: Record<string, AreaSpec> = {
   journal: {
     perItem: true,
@@ -43,16 +44,16 @@ export const AREAS: Record<string, AreaSpec> = {
   work: { perItem: true, types: { cover: [480, 960] } },
   // The illustrations, shown at the width of the prose column. art is first, so a file dropped
   // in under any name is one; only the cover has to be named.
-  art: { perItem: true, autoCover: true, types: { art: [640, 896, 1792, 2688], cover: [640, 896, 1792, 2688] } },
+  art: { perItem: true, autoCover: true, types: { art: [640, 896, 1792], cover: [640, 896, 1792] } },
   home: { perItem: false, types: { cover: [640, 1024, 1600] } },
 };
 
 export type ImageEntry = {
-  ext: string;
-  width: number;
+  width: number; // of the largest variant
   height: number;
-  size: number;
-  md5: string;
+  size: number; // of the largest variant, the file in r2-clone/
+  md5: string; // of the same
+  source: string; // MD5 of the file it was made from, which the name is taken from
   variants: number[];
 };
 

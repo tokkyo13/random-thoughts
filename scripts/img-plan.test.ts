@@ -6,8 +6,9 @@ import { areaOf, collectRefs, planCovers, planGc, planStrays, planSync, variantW
 const J = 'journal/1789139909';
 const MD5 = 'a1b2c3d4e5f60718293a4b5c6d7e8f90'; // -> figure-a1b2c3d4, cover-a1b2c3d4
 const OTHER = 'ffff0000ffff0000ffff0000ffff0000';
-const entry = { ext: 'jpg', width: 1000, height: 800, size: 10, md5: MD5, variants: [448] };
-const objects = (stem: string) => new Map([[`${J}/${stem}.jpg`, 10], [`${J}/${stem}.448w.avif`, 5]]);
+const SOURCE = '0123456789abcdef0123456789abcdef'; // the file the AVIF was made from
+const entry = { width: 448, height: 358, size: 10, md5: MD5, source: SOURCE, variants: [448] };
+const objects = (stem: string) => new Map([[`${J}/${stem}.448w.avif`, 10]]);
 const synced = objects('figure-a1b2c3d4');
 const file = (dir: string, name: string, md5 = MD5) => ({ dir, name, md5, size: 10 });
 
@@ -22,8 +23,8 @@ test('image directories follow AREAS', () => {
 test('a new file is named after its content; a name starting with a type picks that type', () => {
   const p = planSync([file(J, 'IMG_2.jpg', OTHER), file(J, 'IMG_1.JPEG'), file(J, 'Cover.png', OTHER)], { images: {} }, new Map());
   assert.deepEqual(
-    p.uploads.map((u) => [u.from, u.stem, u.ext]),
-    [['Cover.png', 'cover-ffff0000', 'png'], ['IMG_1.JPEG', 'figure-a1b2c3d4', 'jpg'], ['IMG_2.jpg', 'figure-ffff0000', 'jpg']],
+    p.uploads.map((u) => [u.from, u.stem]),
+    [['Cover.png', 'cover-ffff0000'], ['IMG_1.JPEG', 'figure-a1b2c3d4'], ['IMG_2.jpg', 'figure-ffff0000']],
   );
   assert.deepEqual(p.errors, []);
 });
@@ -35,15 +36,28 @@ test('two files with the same content in one directory is an error, not two uplo
 });
 
 test('an image in the manifest keeps its name, whatever the naming scheme was', () => {
-  const p = planSync([file(J, 'figure-001.jpg')], { images: { [`${J}/figure-001`]: entry } }, objects('figure-001'));
+  const p = planSync([file(J, 'figure-001.avif')], { images: { [`${J}/figure-001`]: entry } }, objects('figure-001'));
   assert.deepEqual([p.uploads, p.downloads, p.repairs, p.errors], [[], [], [], []]);
 });
 
-test('editing a file in place makes a new image and leaves the old one', () => {
-  const p = planSync([file(J, 'figure-a1b2c3d4.jpg', OTHER)], { images: { [`${J}/figure-a1b2c3d4`]: entry } }, synced);
-  assert.deepEqual(p.uploads.map((u) => u.stem), ['figure-ffff0000']);
-  assert.deepEqual(p.downloads.map((d) => d.key), [`${J}/figure-a1b2c3d4`]);
-  assert.deepEqual(p.errors, []);
+test('an AVIF edited in place is an error, since restoring the image would land on it', () => {
+  const p = planSync([file(J, 'figure-a1b2c3d4.avif', OTHER)], { images: { [`${J}/figure-a1b2c3d4`]: entry } }, synced);
+  // The error stops apply, so the download still in the plan never runs
+  assert.deepEqual(p.uploads, []);
+  assert.match(p.errors[0], /edited in place/);
+});
+
+test('the file an AVIF was made from is set aside for gc, and nothing else is', () => {
+  const manifest = { images: { [`${J}/figure-a1b2c3d4`]: entry, [`${J}/figure-01234567`]: { ...entry, md5: OTHER } } };
+  const remote = new Map([...synced, ...objects('figure-01234567')]);
+  const local = [file(J, 'figure-a1b2c3d4.avif'), file(J, 'IMG_1.png', SOURCE), file(J, 'figure-01234567.avif', OTHER)];
+  const p = planSync(local, manifest, remote);
+  assert.deepEqual(p.imported.map((f) => f.name), ['IMG_1.png']);
+  assert.deepEqual([p.uploads, p.downloads, p.repairs, p.errors], [[], [], [], []]);
+  // Only the recorded source counts: another file that lands on the same name is not it
+  const clash = planSync([file(J, 'figure-a1b2c3d4.avif'), file(J, 'x.png', '01234567ffffffffffffffffffffffff')], manifest, remote);
+  assert.deepEqual(clash.imported, []);
+  assert.match(clash.errors[0], /name taken/);
 });
 
 test('areas with one type give every file that type', () => {
@@ -52,29 +66,30 @@ test('areas with one type give every file that type', () => {
 });
 
 test('a synced image needs nothing', () => {
-  const p = planSync([file(J, 'figure-a1b2c3d4.jpg')], { images: { [`${J}/figure-a1b2c3d4`]: entry } }, synced);
+  const p = planSync([file(J, 'figure-a1b2c3d4.avif')], { images: { [`${J}/figure-a1b2c3d4`]: entry } }, synced);
   assert.deepEqual([p.uploads, p.downloads, p.repairs, p.warnings, p.errors], [[], [], [], [], []]);
 });
 
 test('missing locally downloads; missing on R2 repairs from a matching local copy, else errors', () => {
   const manifest = { images: { [`${J}/figure-a1b2c3d4`]: entry } };
   assert.equal(planSync([], manifest, synced).downloads.length, 1);
-  const partial = new Map([[`${J}/figure-a1b2c3d4.jpg`, 10]]);
-  assert.equal(planSync([file(J, 'figure-a1b2c3d4.jpg')], manifest, partial).repairs.length, 1);
-  assert.match(planSync([], manifest, partial).errors[0], /missing on R2/);
+  const twoWidths = { images: { [`${J}/figure-a1b2c3d4`]: { ...entry, variants: [448, 896] } } };
+  const partial = new Map([[`${J}/figure-a1b2c3d4.896w.avif`, 10]]);
+  assert.equal(planSync([file(J, 'figure-a1b2c3d4.avif')], twoWidths, partial).repairs.length, 1);
+  assert.match(planSync([], twoWidths, partial).errors[0], /missing on R2/);
 });
 
 test('a cover also owes a share JPEG on R2; other types do not', () => {
   const C = `${J}/cover-a1b2c3d4`;
   const manifest = { images: { [C]: entry } };
-  const withoutShare = new Map([[`${C}.jpg`, 10], [`${C}.448w.avif`, 5]]);
+  const withoutShare = new Map([[`${C}.448w.avif`, 10]]);
   // The share JPEG is missing, so the matching local copy repairs it
-  assert.equal(planSync([file(J, 'cover-a1b2c3d4.jpg')], manifest, withoutShare).repairs.length, 1);
+  assert.equal(planSync([file(J, 'cover-a1b2c3d4.avif')], manifest, withoutShare).repairs.length, 1);
   const withShare = new Map([...withoutShare, [`${C}.share.jpg`, 3]]);
-  assert.deepEqual(planSync([file(J, 'cover-a1b2c3d4.jpg')], manifest, withShare).repairs, []);
-  // A figure owes nothing beyond its original and variants, so the same two objects complete it
+  assert.deepEqual(planSync([file(J, 'cover-a1b2c3d4.avif')], manifest, withShare).repairs, []);
+  // A figure owes nothing beyond its variants
   const figure = { images: { [`${J}/figure-a1b2c3d4`]: entry } };
-  assert.deepEqual(planSync([file(J, 'figure-a1b2c3d4.jpg')], figure, synced).repairs, []);
+  assert.deepEqual(planSync([file(J, 'figure-a1b2c3d4.avif')], figure, synced).repairs, []);
 });
 
 test('bad locations and formats are errors, never uploads', () => {
@@ -113,8 +128,10 @@ test('gc also takes the objects no image claims, and leaves the ones they do', (
   assert.deepEqual(planStrays(manifest, synced), []);
 });
 
-test('variant widths never exceed the original', () => {
-  assert.deepEqual(variantWidths(J, 'figure', 1000), [448, 896]);
+test('the largest variant is the image at its own width, capped by the last listed width', () => {
+  assert.deepEqual(variantWidths(J, 'figure', 5000), [448, 896, 1792]);
+  assert.deepEqual(variantWidths(J, 'figure', 1792), [448, 896, 1792]);
+  assert.deepEqual(variantWidths(J, 'figure', 1000), [448, 896, 1000]);
   assert.deepEqual(variantWidths(J, 'figure', 300), [300]);
 });
 
