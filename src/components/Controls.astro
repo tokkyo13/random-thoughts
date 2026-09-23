@@ -1,8 +1,9 @@
 ---
-// The switch of an art entry. It is drawn twice: in the page's right margin, and in the
-// menu panel that takes over where the margin is too narrow. Both are labels for the one
-// checkbox the page holds, so the two can never disagree. Fitting starts on: a tall picture
-// is worth more whole than large.
+// The controls of an art entry. They are drawn twice: in the page's right margin, and in the
+// menu panel that takes over where the margin is too narrow. Both switches are labels for the
+// one checkbox the page holds, so the two can never disagree. Fitting starts on: a tall
+// picture is worth more whole than large. The button folds the rest of the pictures back
+// again, and the page's script does that for both copies.
 ---
 
 <section class="controls">
@@ -10,9 +11,36 @@
     <span class="switch"></span>
     縦幅を画面に合わせる
   </label>
+
+  <button type="button" class="collapse quiet">画像を折りたたむ</button>
 </section>
 
 <style>
+  /* Every control spans the column, so they all run to one width. The column is as wide as
+     the widest of them, so the width a switch leaves empty after its label is never drawn */
+  .controls {
+    display: grid;
+    width: fit-content;
+    gap: var(--item-gap);
+  }
+
+  /* Only there to undo the rest being opened, so it waits for that */
+  .collapse {
+    display: none;
+    height: var(--control);
+    padding: 0 1rem;
+    background: var(--surface); /* the colours of the button it undoes, with .quiet */
+    border: var(--rule);
+    border-radius: var(--radius-pill);
+    font: inherit;
+    letter-spacing: var(--ls-body);
+    cursor: pointer;
+  }
+
+  :global(body:has(.more[open])) .collapse {
+    display: block;
+  }
+
   .control {
     display: flex;
     align-items: center;

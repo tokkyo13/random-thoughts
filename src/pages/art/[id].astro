@@ -134,6 +134,16 @@ const [first, ...rest] = shots;
       const to = frames[frames.indexOf(frame) + step];
       to?.scrollIntoView({ block: 'center' });
     });
+
+    // Folding the rest back is for the title and description, which then sit right under the
+    // first picture: the view goes to the top, and the menu, if it held the button, closes
+    for (const button of document.querySelectorAll('.collapse')) {
+      button.addEventListener('click', () => {
+        gallery.querySelector<HTMLDetailsElement>('.more')!.open = false;
+        document.querySelector<HTMLDetailsElement>('.menu')?.removeAttribute('open');
+        scrollTo(0, 0);
+      });
+    }
   }
 </script>
 
@@ -203,7 +213,7 @@ const [first, ...rest] = shots;
     color: var(--text);
   }
 
-  /* Once the rest are out there is no way back, so the button goes with them */
+  /* Once the rest are out the controls hold the way back, so the button goes with them */
   .more[open] > summary {
     display: none;
   }
