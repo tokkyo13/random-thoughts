@@ -11,6 +11,9 @@
   /* Nord, the same palette as the code theme in astro.config.mjs */
   --bg: #3b4252;
   --surface: #434c5e;
+  /* For a control standing on a --surface panel: a step past --border, as far again as the
+     steps below */
+  --raised: #556074;
   --text: #eceff4;
   --text-muted: #d8dee9;
   --border: #4c566a;

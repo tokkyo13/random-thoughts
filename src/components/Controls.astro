@@ -37,6 +37,13 @@
     cursor: pointer;
   }
 
+  /* The menu panel is --surface itself, so there the button stands out by its fill alone. A
+     border darker than that fill would be the rail's button turned inside out, so it goes */
+  :global(.menu) .collapse {
+    background: var(--raised);
+    border: 0;
+  }
+
   :global(body:has(.more[open])) .collapse {
     display: block;
   }
