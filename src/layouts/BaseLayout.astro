@@ -15,8 +15,8 @@ interface Props {
 }
 
 const { title, description, image, hasToc = false, hasControls = false } = Astro.props;
-// Home lays itself out and carries no rails, the same call SiteHeader makes
-const isHome = Astro.url.pathname === '/';
+// Top lays itself out and carries no rails, the same call SiteHeader makes
+const isTop = Astro.url.pathname === '/';
 const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
 ---
 
@@ -41,7 +41,7 @@ const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
       href="/rss.xml"
     />
   </head>
-  <body class:list={{ home: isHome, railed: hasToc || hasControls }}>
+  <body class:list={{ top: isTop, railed: hasToc || hasControls }}>
     <SiteHeader hasToc={hasToc} hasControls={hasControls}>
       <slot name="toc" slot="toc" />
       <slot name="controls" slot="controls" />

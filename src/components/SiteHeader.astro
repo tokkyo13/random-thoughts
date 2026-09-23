@@ -17,18 +17,18 @@ const tabbed = hasToc || hasControls;
 
 const path = Astro.url.pathname;
 // A prefix match, so an article page (/journal/<id>/) marks Journal as current.
-// Home is the exception: '/' is a prefix of everything
+// Top is the exception: '/' is a prefix of everything
 const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
 
-// Home lays the same links out as its own content, so it needs neither rail nor button
-const isHome = path === '/';
+// Top lays the same links out as its own content, so it needs neither rail nor button
+const isTop = path === '/';
 
-// The rail shows the logo, and that is the way home. The panel has no logo, so it lists Home
+// The rail shows the logo, and that is the way to Top. The panel has no logo, so it lists Top
 const railItems = NAV_ITEMS.filter((item) => item.href !== '/');
 ---
 
 {
-  !isHome && (
+  !isTop && (
     <header>
       {/* Wide viewports: a rail in the left margin, the twin of an article's TOC on the right */}
       <div class="rail">

@@ -52,7 +52,7 @@
   --measure: 56rem;
   --gutter: clamp(1.25rem, 5vw, 2.5rem);
   --page-width: calc(var(--measure) + var(--gutter) * 2);
-  /* The site logo, in the rail and on the home page. Paired with --fs-base text in both,
+  /* The site logo, in the rail and on the top page. Paired with --fs-base text in both,
      so the two lay out to the same proportion */
   --logo-height: 2.5rem;
   /* Where the content starts. The nav rail and an article's TOC share it, so the three line up.
@@ -175,7 +175,7 @@ b {
    85rem is the width they start at: SiteHeader.astro, journal/[id], art/[id] and index.astro
    repeat the number, because a media query cannot read a variable */
 @media (width > 85rem) {
-  body:not(.home) {
+  body:not(.top) {
     padding-left: var(--rail-width);
   }
 
@@ -453,7 +453,7 @@ b {
   text-decoration: none;
 }
 
-/* A column of links: the nav rail, the home page, the menu panel, an article's TOC.
+/* A column of links: the nav rail, the top page, the menu panel, an article's TOC.
    Each of them lays the column out itself; this is only what all four agree on */
 .nav-list {
   margin: 0;

@@ -8,7 +8,7 @@ export const SOURCE_URL = 'https://github.com/tokkyo13/random-thoughts';
 export const SITE_DESCRIPTION = `${AUTHOR.name}の個人サイトです。`;
 
 export const NAV_ITEMS = [
-  { label: 'Home', href: '/' },
+  { label: 'Top', href: '/' },
   { label: 'Journal', href: '/journal/' },
   { label: 'Art', href: '/art/' },
   { label: 'Work', href: '/work/' },
