@@ -33,6 +33,19 @@ const counter = total > 1 ? `${n} / ${total}` : '';
     if (img.complete) mark();
     else img.addEventListener('load', mark, { once: true });
   }
+
+  // The numbers are for finding one's place, which is only while the page moves. They come up
+  // with a scroll and go once it has been still for a moment
+  let still: ReturnType<typeof setTimeout>;
+  addEventListener(
+    'scroll',
+    () => {
+      document.body.dataset.scrolling = '';
+      clearTimeout(still);
+      still = setTimeout(() => delete document.body.dataset.scrolling, 800);
+    },
+    { passive: true },
+  );
 </script>
 
 <style>
@@ -62,8 +75,8 @@ const counter = total > 1 ? `${n} / ${total}` : '';
     display: none;
   }
 
-  /* The darkest of the palette, so the number reads over any picture, and set back from it
-     so it takes as little of the picture as it can */
+  /* The darkest of the palette, so the number reads over any picture. Out of sight until the
+     page moves (see the script above) */
   figcaption {
     position: absolute;
     right: 0.5rem;
@@ -74,6 +87,11 @@ const counter = total > 1 ? `${n} / ${total}` : '';
     color: var(--text);
     font-size: var(--fs-xs);
     letter-spacing: var(--ls-body);
+    opacity: 0;
+  }
+
+  /* Set back from the picture even while it shows, so it takes as little of it as it can */
+  :global(body[data-scrolling]) figcaption {
     opacity: 0.5;
   }
 </style>
