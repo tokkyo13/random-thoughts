@@ -154,15 +154,25 @@ const [first, ...rest] = shots;
     overflow-anchor: none;
   }
 
-  .layout,
-  .rest {
+  /* A picture wants the screen more than the words do, so the page keeps a narrower margin
+     around it. --page-top is set again with it: a variable resolves where it is defined, so
+     the one on :root would keep the old gutter. The controls are inside and go up with it */
+  :global(.site-main) {
+    --gutter: clamp(0.75rem, 2.5vw, 1.25rem);
+    --page-top: var(--gutter);
+  }
+
+  .layout {
     display: grid;
     gap: var(--item-gap);
   }
 
-  /* The gap the layout puts under the gallery, put back above the pictures the button opens */
+  /* Between two pictures, the same margin as around them. The first is in a box of its own,
+     so the gap above the second is put back as a margin */
   .rest {
-    margin-top: var(--item-gap);
+    display: grid;
+    gap: var(--gutter);
+    margin-top: var(--gutter);
   }
 
   /* The labels that drive this sit wherever the controls are, and clicking one moves focus
