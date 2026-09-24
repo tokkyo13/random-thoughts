@@ -250,15 +250,15 @@ const [first, ...rest] = shots;
       max-width: none;
     }
 
-    /* The controls stand in the right margin, against the edge of the screen and just
-       inside the line the header draws there. Below this width the menu takes them */
+    /* The controls stand in the right margin, centred between the line the header draws
+       there and the edge of the screen. Below this width the menu takes them */
     .side-controls {
       display: block;
       position: fixed;
       top: var(--page-top); /* level with the nav rail on the other side */
       right: 0;
       width: var(--rail-width);
-      padding: 0 var(--gutter) 0 1rem;
+      padding: 0 1rem;
     }
   }
 </style>
