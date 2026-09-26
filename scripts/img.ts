@@ -1,4 +1,4 @@
-// Syncs r2-clone/ with R2 and keeps src/images/manifest.json in step. See README.md.
+// Syncs r2-clone/ with R2 and keeps content/image/manifest.json in step. See README.md.
 // plan and apply never delete. gc runs only when in sync, and deletes only after a typed
 // confirmation in an interactive terminal.
 import fs from 'node:fs';
@@ -14,7 +14,7 @@ import {
 } from './img-plan.ts';
 
 const ROOT = 'r2-clone';
-const MANIFEST = 'src/images/manifest.json';
+const MANIFEST = 'content/image/manifest.json';
 const CREDENTIALS = 'creds/r2.env';
 const CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
@@ -212,7 +212,7 @@ async function main() {
 const WRITE_BACK_AREA = 'art';
 
 function writeBack(id: string, names: string[]) {
-  const file = `src/content/${WRITE_BACK_AREA}/${id}.mdx`;
+  const file = `content/${WRITE_BACK_AREA}/${id}.mdx`;
   if (!fs.existsSync(file)) return console.log(`! ${file} does not exist; nothing to write the names into`);
   const { text, added, problem } = writeNames(read(file), names);
   if (added.length > 0) {
@@ -225,16 +225,16 @@ function writeBack(id: string, names: string[]) {
 // For each perItem area in AREAS: item id -> the text to search for image names.
 const mdxItems = (area: string) => () =>
   new Map(
-    fs.readdirSync(`src/content/${area}`)
+    fs.readdirSync(`content/${area}`)
       .filter((f) => f.endsWith('.mdx'))
-      .map((f) => [f.slice(0, -'.mdx'.length), read(`src/content/${area}/${f}`)]),
+      .map((f) => [f.slice(0, -'.mdx'.length), read(`content/${area}/${f}`)]),
   );
 
 const ITEM_SOURCES: Record<string, () => Map<string, string>> = {
   journal: mdxItems('journal'),
   art: mdxItems('art'),
   work: () =>
-    new Map((JSON.parse(read('src/content/work/work.json')) as { id: number }[]).map((w) => [String(w.id), JSON.stringify(w)])),
+    new Map((JSON.parse(read('content/work/work.json')) as { id: number }[]).map((w) => [String(w.id), JSON.stringify(w)])),
 };
 async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncPlan, remote: Map<string, number>) {
   if (plan.errors.length + plan.uploads.length + plan.repairs.length + plan.downloads.length > 0) {
@@ -248,8 +248,9 @@ async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncP
     if (!source) fail(`No item source for area "${area}" in scripts/img.ts; cannot tell what is referenced.`);
     items[area] = source();
   }
-  const sources = (fs.readdirSync('src', { recursive: true }) as string[])
-    .map((f) => path.join('src', f).split(path.sep).join('/'))
+  const sources = ['src', 'content']
+    .flatMap((dir) => (fs.readdirSync(dir, { recursive: true }) as string[]).map((f) => path.join(dir, f)))
+    .map((f) => f.split(path.sep).join('/'))
     // The manifest lists every key and would keep everything alive.
     .filter((f) => /\.(astro|ts|tsx|js|mjs|md|mdx|json)$/.test(f) && f !== MANIFEST && fs.statSync(f).isFile())
     .map(read);

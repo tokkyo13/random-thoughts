@@ -1,17 +1,11 @@
 ---
+import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PageHeader from "../components/PageHeader.astro";
 import ExternalLink from "../components/ExternalLink.astro";
-import { SOURCE_URL } from "../consts";
 
-// A path stays on this site, so it does not get the external-link treatment
-const links = [
-  { label: "Source", url: SOURCE_URL },
-  { label: "RSS", url: "/rss.xml" },
-  { label: "Bluesky", url: "https://bsky.app/profile/tokkyo13.bsky.social" },
-  { label: "Pixiv", url: "https://pixiv.me/tokkyo13" },
-  { label: "GitHub", url: "https://github.com/tokkyo13" },
-];
+// content/link/link.json: the label is the id, and the file's order is the order shown
+const links = (await getCollection("link")).map((link) => ({ label: link.id, url: link.data.url }));
 ---
 
 <BaseLayout title="Link" description="リンク集">
@@ -22,6 +16,7 @@ const links = [
       {
         links.map((link) => (
           <li>
+            {/* A path stays on this site, so it does not get the external-link treatment */}
             {link.url.startsWith("/") ? (
               <a href={link.url}>{link.label}</a>
             ) : (

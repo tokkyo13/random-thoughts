@@ -8,6 +8,7 @@ Images are kept out of Git. Their web variants live in Cloudflare R2, a local wo
 
 - Node.js 22.18 or later. The scripts are TypeScript run directly by Node.
 - For image sync only: R2 credentials in `creds/r2.env` (see [Configuration](#configuration)). Building the site needs none.
+- For `npm test` only: [uv](https://docs.astral.sh/uv/), which runs the [REUSE](https://reuse.software) tool in a Python of its own (see [License](#license)).
 
 ## Commands
 
@@ -16,7 +17,7 @@ Images are kept out of Git. Their web variants live in Cloudflare R2, a local wo
 | `npm run dev` | Start the development server |
 | `npm run build` | Build the static site into `dist/` |
 | `npm run preview` | Serve the build locally |
-| `npm test` | Run the unit tests (`scripts/**/*.test.ts`) |
+| `npm test` | Run the unit tests (`scripts/**/*.test.ts`), the license check among them |
 | `npm run new journal` | Create a draft article |
 | `npm run new art` | Create an art entry |
 | `npm run new work` | Append a work entry |
@@ -27,32 +28,67 @@ Images are kept out of Git. Their web variants live in Cloudflare R2, a local wo
 ## Project structure
 
 ```text
+content/              everything particular to this site; one directory per kind
+  site/               site.json (name, description, addresses) and logo.svg
+  about/              about.mdx, the author and the introduction, and avatar.avif
+  link/               link.json, the links of the Link page
+  journal/            articles, one <id>.mdx each
+  art/                illustrations, one <id>.mdx each
+  work/               work.json, the work entries in display order
+  image/              manifest.json, the images in R2, written by the sync tool
 src/
   components/         Fig, Note and Code (available in articles), PageHeader, ExternalLink, ...
-  content/journal/    articles, one <id>.mdx each
-  content/art/        illustrations, one <id>.mdx each
-  content/work/       work.json, the work entries in display order
   layouts/  pages/  styles/
-  consts.ts           site-wide constants
+  consts.ts           site-wide constants that are not content
   content.config.ts   content schemas
-  images/             areas, widths, bucket and origin (config.ts); the manifest
-                      (manifest.json); image(), which resolves a key to <img>
-                      attributes (index.ts)
+  images/             areas, widths and bucket (config.ts); image(), which resolves a key
+                      to <img> attributes (index.ts)
 scripts/
   img.ts              image sync tool (file system and R2 access)
   img-plan.ts         its pure planning logic, tested by img-plan.test.ts
   new.ts              creates articles, art entries and work entries
+  license.test.ts     the license check
 creds/                r2.env (not in Git) and its template
 r2-clone/             local copy of the largest variant of each image, not in Git
+LICENSES/  REUSE.toml the license of every file
 ```
+
+The program and the content are kept apart. Everything that belongs to this site in particular, and that a fork replaces with its own, lives in `content/`, and nothing in `src/` or `scripts/` names it. Writing, renaming or restyling the site's own material means editing `content/` alone.
 
 Each kind of definition has one home: image areas in `src/images/config.ts`, content schemas in `src/content.config.ts`, site-wide constants in `src/consts.ts`, and shared page parts in `src/components/`.
 
 ## Content
 
+### Site
+
+`content/site/site.json` says what the site is and where it lives. It is read by the pages and by the configuration (`astro.config.mjs`, `src/images/config.ts`).
+
+| Field | Description |
+| --- | --- |
+| `title` | Site name: the page title, the feed title, and the label of the logo |
+| `description` | One sentence for Top and the feed |
+| `url` | The site's own origin, for absolute URLs in the feed |
+| `imageOrigin` | The origin the images are served from (see [Storage](#storage)) |
+
+`content/site/logo.svg` is the logo in the navigation. The favicons belong with it but stay in `public/` (`favicon.ico`, `favicon.svg`), where they have to be for the build to serve them.
+
+### About
+
+`content/about/about.mdx` is the About page. Its body is the introduction, in MDX.
+
+| Field | Required | Description |
+| --- | --- | --- |
+| `name` | yes | The author's name |
+| `latin` | yes | Its reading in Latin letters, shown beside it |
+| `avatar` | yes | Path to the picture, relative to the file, such as `./avatar.avif`. It is served as it is, so make it a square AVIF of 320px, twice the 160px it is shown at |
+
+### Link
+
+`content/link/link.json` lists the links of the Link page. Each key is a label and holds its `url`; the order of the keys is the order shown. A path such as `/rss.xml` stays on this site, and any other URL opens in a new tab.
+
 ### Journal
 
-Each article is a single file, `src/content/journal/<id>.mdx`. The `<id>` is the Unix time, in seconds, at which the article was created. It is also the URL (`/journal/<id>/`) and the image directory (`r2-clone/journal/<id>/`), so article files are never renamed. Human-readable information belongs in the frontmatter.
+Each article is a single file, `content/journal/<id>.mdx`. The `<id>` is the Unix time, in seconds, at which the article was created. It is also the URL (`/journal/<id>/`) and the image directory (`r2-clone/journal/<id>/`), so article files are never renamed. Human-readable information belongs in the frontmatter.
 
 | Field | Required | Description |
 | --- | --- | --- |
@@ -72,7 +108,7 @@ Articles are MDX. Plain Markdown works unchanged, and these components are avail
 <Code file="src/consts.ts">
 
 ```ts
-export const SITE_TITLE = '散考';
+export const PER_PAGE = 30;
 ```
 
 </Code>
@@ -88,7 +124,7 @@ MDX differs from Markdown in a few places: autolinks (`<https://...>`) and inden
 
 ### Work
 
-`src/content/work/work.json` is an array of entries, shown in array order:
+`content/work/work.json` is an array of entries, shown in array order:
 
 | Field | Required | Description |
 | --- | --- | --- |
@@ -100,7 +136,7 @@ MDX differs from Markdown in a few places: autolinks (`<https://...>`) and inden
 
 ### Art
 
-Each entry is a single file, `src/content/art/<id>.mdx`, named and numbered like an article. An entry holds one illustration or a set of them. The list at `/art/` shows a square thumbnail cropped from the center; the page at `/art/<id>/` shows the first image at the width of the text column, and a button opens the rest below it. Every image carries its number in the set, and one switch fits them all to the height of the window.
+Each entry is a single file, `content/art/<id>.mdx`, named and numbered like an article. An entry holds one illustration or a set of them. The list at `/art/` shows a square thumbnail cropped from the center; the page at `/art/<id>/` shows the first image at the width of the text column, and a button opens the rest below it. Every image carries its number in the set, and one switch fits them all to the height of the window.
 
 | Field | Required | Description |
 | --- | --- | --- |
@@ -139,14 +175,14 @@ No original is kept. Everything lives in one public bucket, served from the imag
 - **Variants** under `<dir>/<name>.<width>w.avif`. They are generated locally with sharp as AVIF and carry no metadata. The widths depend on the area and type. The largest is the image at its own width, capped by the last width listed (1792 at most, which covers an ordinary screen at 2x), and holds all an image has: every smaller variant can be made from it. `r2-clone/` keeps a copy of it as `<name>.avif`.
 - **Share images** under `<dir>/<name>.share.jpg`. Only covers get one, and only a link preview ever fetches it: the scrapers behind them do not read AVIF, so this is a small JPEG instead. It is not referenced by any page, so a reader never downloads it.
 - Both are uploaded with `Cache-Control: public, max-age=31536000, immutable`. Because the name follows from the content, a name can never point at different bytes, and cached copies never go stale.
-- `src/images/manifest.json` records, for every image, the dimensions and MD5 hash of the largest variant, the MD5 hash of the file it was made from, and the variant widths. The site build reads only this file and never contacts R2.
+- `content/image/manifest.json` records, for every image, the dimensions and MD5 hash of the largest variant, the MD5 hash of the file it was made from, and the variant widths. The site build reads only this file and never contacts R2.
 
 ### Workflow
 
 1. Put images in the item's directory under `r2-clone/`, with any file name. A name starting with a type, such as `cover.jpg`, selects that type; other files get the area's first type.
 2. Run `npm run img plan` to see the names that will be assigned, then `npm run img apply` to upload the variants, write `<name>.avif` beside each file, and update the manifest. The files you put in stay where they are until `gc` deletes them.
 3. Reference images by name: `<Fig src="figure-a3f91c2b" />` in an article, `cover: cover-a3f91c2b` in frontmatter or a work entry, or a full key such as `image('home/cover-a3f91c2b')` in a page.
-4. Commit `src/images/manifest.json` together with the content that uses the images.
+4. Commit `content/image/manifest.json` together with the content that uses the images.
 
 To replace an image, add the new version (it gets a new name), update the references, and remove the old one with `gc`. Images are never overwritten in place. An AVIF in `r2-clone/` edited in place is an error: save the edit under another name, and it becomes a new image.
 
@@ -162,7 +198,7 @@ To replace an image, add the new version (it gets a new name), update the refere
 | In both, same content | Nothing |
 | In the manifest, objects missing in R2 | Make them again from the local copy if it matches, otherwise report an error |
 
-`gc` runs only when everything is in sync. It deletes, from the bucket and from `r2-clone/`, every image whose key appears nowhere: not in any article, art or work entry, and not in any source file under `src/`. Images of deleted articles or entries are included. It also deletes, from the bucket alone, every object that no image in the manifest claims any more, such as the variants left behind by a width list that changed, and, from `r2-clone/` alone, every file an image was made from. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
+`gc` runs only when everything is in sync. It deletes, from the bucket and from `r2-clone/`, every image whose key appears nowhere: not in any article, art or work entry, and not in any file under `src/` or `content/`. Images of deleted articles or entries are included. It also deletes, from the bucket alone, every object that no image in the manifest claims any more, such as the variants left behind by a width list that changed, and, from `r2-clone/` alone, every file an image was made from. The search is deliberately conservative, so any occurrence counts, even in a comment. Keys built at runtime cannot be found, so write keys as whole strings. Deletion requires typing `delete <count>` in an interactive terminal; `gc` refuses to delete anything otherwise, and has no option to skip the confirmation.
 
 ### Adding an area
 
@@ -171,8 +207,9 @@ Add the area to `AREAS` in `src/images/config.ts`. An area with one directory pe
 ## Configuration
 
 - **Credentials**: copy `creds/r2.env.example` to `creds/r2.env` and fill in `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` from an R2 API token with Object Read & Write permission on the bucket. Only the sync tool reads them. Credential files are ignored by Git.
-- `src/images/config.ts`: the bucket name and the public image origin.
-- `astro.config.mjs`: the site URL, used for absolute URLs in the feed.
+- `src/images/config.ts`: the bucket name.
+- `content/site/site.json`: the site URL and the public image origin (see [Site](#site)).
+- `wrangler.jsonc`: the domain the site is served at (see [Deployment](#deployment)).
 
 ### Claude Code
 
@@ -192,7 +229,7 @@ The rule does not cover every shell command, so do not ask the agent to read the
 
 `npm run build` writes a static site to `dist/`, which any static host can serve. Images are not part of the build output; pages link to the image origin.
 
-The site is served by Cloudflare Workers as static assets, with no Worker script. `wrangler.jsonc` holds the whole configuration: the asset directory, `dist/404.html` for unknown paths, and `tokkyo13.net` as the only address. Workers Builds deploys every push to `main` by running `npm run build`, then `npx wrangler deploy`. The build needs no credentials.
+The site is served by Cloudflare Workers as static assets, with no Worker script. `wrangler.jsonc` holds the whole configuration: the asset directory, `dist/404.html` for unknown paths, and the site's domain as its only address. Workers Builds deploys every push to `main` by running `npm run build`, then `npx wrangler deploy`. The build needs no credentials.
 
 ### Response headers
 
@@ -206,14 +243,33 @@ Nothing about visitors is collected: no cookies, no analytics beacon, and no req
 
 ## Third-party assets
 
-Work by others that is checked into this repository. Each one keeps its license text beside it. Everything is inlined at build time; no font or icon service is loaded at runtime.
+Work by others that is checked into this repository. Its license text is in `LICENSES/`, and `REUSE.toml` names the files it covers. Everything is inlined at build time; no font or icon service is loaded at runtime.
 
 | Files | Source | License |
 | --- | --- | --- |
-| `src/assets/icons/*.svg` | [Material Symbols](https://github.com/google/material-design-icons), outlined, 24px | Apache-2.0, `src/assets/icons/LICENSE` |
+| `src/assets/icons/*.svg` | [Material Symbols](https://github.com/google/material-design-icons), outlined, 24px | Apache-2.0, `LICENSES/Apache-2.0.txt` |
 
 Also used, with no files of its own in the repository:
 
 | Where | Source | License |
 | --- | --- | --- |
-| `src/assets/logo.svg` | The title logo uses [Hina Mincho](https://github.com/Satsuyako/Hina-Mincho) as its base. The SVG is artwork made with the font, not a copy of it | SIL OFL 1.1 |
+| `content/site/logo.svg` | The title logo uses [Hina Mincho](https://github.com/Satsuyako/Hina-Mincho) as its base. The SVG is artwork made with the font, not a copy of it | SIL OFL 1.1 |
+
+## License
+
+The program is free to reuse under the MIT License. The content is not licensed at all. There is no single license for the repository as a whole, so there is no `LICENSE` file at the root: each file has its own, as stated in [`REUSE.toml`](REUSE.toml) in the format of the [REUSE Specification 3.3](https://reuse.software/spec-3.3/), with the license texts in `LICENSES/`.
+
+| Files | License |
+| --- | --- |
+| Everything not named below | MIT, `LICENSES/MIT.txt` |
+| `src/assets/icons/*.svg` | Apache-2.0, `LICENSES/Apache-2.0.txt` (see [Third-party assets](#third-party-assets)) |
+| `content/`, `public/favicon.ico`, `public/favicon.svg`, `wrangler.jsonc` | None, `LICENSES/LicenseRef-None.txt`, which states only that no license is granted |
+
+The unlicensed files are what is particular to the author and to this site: the writing and the pictures, the code shown in articles, titles and descriptions, the author's name and profile, the site's name, logo and addresses, and the image manifest. Some of these may not be protected by copyright; they are excluded all the same, to mark where the MIT License ends. The images served from the image origin are not in the repository, and are not licensed either. A fork keeps the program and replaces `content/` with its own.
+
+`npm test` checks both halves of this (`scripts/license.test.ts`):
+
+- Every file has a license and a copyright notice. This is `reuse lint`, run through `uvx` at a pinned version, so neither Python nor the tool has to be installed by hand.
+- No file under MIT holds what `content/` says about the site and the author: the site's title, description and domains, the author's name and its reading, and the external links. When the check fails, move the value into `content/`, and let the program read it from there.
+
+A file whose place is fixed by a tool, and which has to name the site, is listed in `REUSE.toml` instead of being moved: the favicons, which the build serves from `public/`, and `wrangler.jsonc`, which cannot read the domain from anywhere else.

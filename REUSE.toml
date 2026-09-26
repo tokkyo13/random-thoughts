@@ -1,0 +1,24 @@
+# Licensing of every file in this repository, in the format of the REUSE Specification 3.3
+# (https://reuse.software/spec-3.3/). Where several annotations match a file, the last one wins.
+# "npm test" checks that every file is covered. See "License" in README.md.
+version = 1
+
+# The program: everything not named below
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 tokkyo13"
+SPDX-License-Identifier = "MIT"
+
+# Material Symbols, see "Third-party assets" in README.md
+[[annotations]]
+path = "src/assets/icons/*.svg"
+SPDX-FileCopyrightText = "Google LLC"
+SPDX-License-Identifier = "Apache-2.0"
+
+# What is particular to the author and to this site. content/ holds all of it, except files whose
+# place a tool decides: the favicons, served from public/, and the Workers configuration,
+# which names the domain
+[[annotations]]
+path = ["content/**", "public/favicon.ico", "public/favicon.svg", "wrangler.jsonc"]
+SPDX-FileCopyrightText = "2026 tokkyo13"
+SPDX-License-Identifier = "LicenseRef-None"

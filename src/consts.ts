@@ -1,11 +1,5 @@
-export const SITE_TITLE = '散考';
+// What this site is, and who writes it, is content: content/site/ and content/about/.
 export const SITE_LANG = 'ja';
-
-// latin is the reading of name, shown side by side in About.
-export const AUTHOR = { name: '特許13', latin: 'tokkyo13' };
-export const SOURCE_URL = 'https://github.com/tokkyo13/random-thoughts';
-
-export const SITE_DESCRIPTION = `${AUTHOR.name}の個人サイトです。`;
 
 export const NAV_ITEMS = [
   { label: 'Top', href: '/' },

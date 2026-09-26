@@ -2,7 +2,7 @@ import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
 import { journalUrl, listPosts } from '../posts';
 import { listArt, artUrl } from '../art';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import site from '../../content/site/site.json';
 
 // One feed for the whole site, newest first. No article bodies: MDX components would have to
 // be rendered for feed readers.
@@ -27,8 +27,8 @@ export async function GET(context: APIContext) {
   ].sort((a, b) => b.pubDate.valueOf() - a.pubDate.valueOf());
 
   return rss({
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
+    title: site.title,
+    description: site.description,
     site: context.site!,
     items,
   });

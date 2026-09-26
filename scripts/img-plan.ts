@@ -121,7 +121,7 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
     const missing = keys.filter((k) => !remote.has(k));
     const largest = keys[0];
     if (remote.has(largest) && remote.get(largest) !== entry.size) {
-      plan.errors.push(`${key}  size on R2 does not match src/images/manifest.json`);
+      plan.errors.push(`${key}  size on R2 does not match content/image/manifest.json`);
     } else if (missing.length > 0) {
       if (file) {
         const [dir, stem] = splitKey(key);

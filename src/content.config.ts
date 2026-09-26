@@ -8,7 +8,7 @@ const imageName = z.string();
 
 // The file name (unix seconds) is the id, the URL and the image directory.
 const journal = defineCollection({
-  loader: glob({ base: './src/content/journal', pattern: '*.mdx' }),
+  loader: glob({ base: './content/journal', pattern: '*.mdx' }),
   schema: z.object({
     title: z.string(),
     description: z.string().optional(),
@@ -21,7 +21,7 @@ const journal = defineCollection({
 
 // Array order is display order.
 const work = defineCollection({
-  loader: file('src/content/work/work.json'),
+  loader: file('content/work/work.json'),
   schema: z.object({
     title: z.string(),
     description: z.string(),
@@ -33,7 +33,7 @@ const work = defineCollection({
 // One illustration per file, laid out like an article: the body is the description, and it is
 // the only optional part. The file name (unix seconds) is the id, the URL and the image directory.
 const art = defineCollection({
-  loader: glob({ base: './src/content/art', pattern: '*.mdx' }),
+  loader: glob({ base: './content/art', pattern: '*.mdx' }),
   schema: z.object({
     title: z.string(),
     description: z.string().optional(),
@@ -48,4 +48,23 @@ const art = defineCollection({
   }).strict(),
 });
 
-export const collections = { journal, work, art };
+// Whoever writes the site: the About page. One file, about.mdx; the body is the introduction.
+const about = defineCollection({
+  loader: glob({ base: './content/about', pattern: 'about.mdx' }),
+  schema: ({ image }) => z.object({
+    name: z.string(),
+    latin: z.string(), // the reading of name, shown beside it
+    avatar: image(),
+  }).strict(),
+});
+
+// The Link page. The key is the label, and key order is display order. A path stays on this
+// site; anything else is an external link.
+const link = defineCollection({
+  loader: file('content/link/link.json'),
+  schema: z.object({
+    url: z.union([z.url(), z.string().startsWith('/')]),
+  }).strict(),
+});
+
+export const collections = { journal, work, art, about, link };

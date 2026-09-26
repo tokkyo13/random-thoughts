@@ -1,20 +1,23 @@
 ---
-import { Image } from 'astro:assets';
+import { getEntry, render } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
-import { AUTHOR } from '../consts';
-import avatar from '../assets/avatar.png';
+
+const about = (await getEntry('about', 'about'))!;
+const { Content } = await render(about);
+const { name, latin, avatar } = about.data;
 ---
 
 <BaseLayout title="About" description="このサイトについて">
   <PageHeader title="About" />
 
   <div class="profile">
-    <Image class="avatar" src={avatar} alt="" width={320} height={320} />
+    {/* Served as it is: the file is already an AVIF at twice the size shown (see README.md) */}
+    <img class="avatar" src={avatar.src} alt="" width={avatar.width} height={avatar.height} />
 
     <div class="prose body">
-      <h2 class="name">{AUTHOR.name} / {AUTHOR.latin}</h2>
-      <p>絵、電子、情報</p>
+      <h2 class="name">{name} / {latin}</h2>
+      <Content />
     </div>
   </div>
 </BaseLayout>

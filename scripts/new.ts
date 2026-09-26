@@ -9,7 +9,7 @@ if (kind === 'journal' || kind === 'art') {
   const today = [d.getFullYear(), d.getMonth() + 1, d.getDate()]
     .map((n) => String(n).padStart(2, '0'))
     .join('-');
-  const file = `src/content/${kind}/${id}.mdx`;
+  const file = `content/${kind}/${id}.mdx`;
   // An article starts hidden; a piece of art names its images instead, and "npm run img apply"
   // fills both lines in.
   const extra = kind === 'journal' ? ['draft: true'] : ["cover: ''", 'images: []'];
@@ -23,7 +23,7 @@ if (kind === 'journal' || kind === 'art') {
     console.log('the order of "images" is the order they are shown in; the body is the description');
   }
 } else if (kind === 'work') {
-  const file = 'src/content/work/work.json';
+  const file = 'content/work/work.json';
   const entries: { id: number }[] = JSON.parse(fs.readFileSync(file, 'utf8'));
   if (entries.some((e) => e.id === id)) throw new Error(`id ${id} already exists in ${file}`);
   // Placeholders that pass the schema in src/content.config.ts; fill them in.

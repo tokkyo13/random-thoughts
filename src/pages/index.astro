@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SITE_DESCRIPTION } from '../consts';
+import site from '../../content/site/site.json';
 ---
 
 {/* Top is the navigation alone, which the shell draws itself */}
-<BaseLayout description={SITE_DESCRIPTION} />
+<BaseLayout description={site.description} />

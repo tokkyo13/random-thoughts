@@ -1,6 +1,7 @@
 ---
-import { SITE_TITLE, NAV_ITEMS } from '../../consts';
-import Logo from '../../assets/logo.svg';
+import { NAV_ITEMS } from '../../consts';
+import site from '../../../content/site/site.json';
+import Logo from '../../../content/site/logo.svg';
 
 // The navigation, in the three forms the shell stands it in: the rail in the left margin of a
 // wide screen, a pane of the menu panel on a narrow one, and Top, which is nothing else
@@ -21,14 +22,14 @@ const items = form === 'panel' ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.hre
 
 <div class:list={{ 'wide-only': form === 'rail' }} data-form={form}>
   {form === 'rail' && (
-    <a class="brand" href="/" aria-label={SITE_TITLE}>
+    <a class="brand" href="/" aria-label={site.title}>
       <Logo />
     </a>
   )}
 
   {/* Top is where the logo leads, so there it is only the mark */}
   {form === 'top' && (
-    <div class="brand" role="img" aria-label={SITE_TITLE}>
+    <div class="brand" role="img" aria-label={site.title}>
       <Logo />
     </div>
   )}

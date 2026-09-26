@@ -1,4 +1,4 @@
-import manifest from './manifest.json';
+import manifest from '../../content/image/manifest.json';
 import { IMAGE_ORIGIN, shareKey, variantKey, type Manifest } from './config';
 
 const { images } = manifest as Manifest;
@@ -11,7 +11,7 @@ const { images } = manifest as Manifest;
 export function image(key: string, loading: 'lazy' | 'eager' = 'lazy') {
   const entry = images[key];
   if (!entry) {
-    throw new Error(`Image "${key}" is not in src/images/manifest.json. Run "npm run img apply".`);
+    throw new Error(`Image "${key}" is not in content/image/manifest.json. Run "npm run img apply".`);
   }
   const url = (w: number) => `${IMAGE_ORIGIN}/${variantKey(key, w)}`;
   return {

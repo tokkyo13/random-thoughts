@@ -1,6 +1,8 @@
 // Shared by the site (src/images/index.ts) and the sync tool (scripts/img.ts).
 
-export const IMAGE_ORIGIN = 'https://img.tokkyo13.net';
+import site from '../../content/site/site.json' with { type: 'json' };
+
+export const IMAGE_ORIGIN = site.imageOrigin;
 export const BUCKET = 'random-thoughts-images';
 
 // Names are "<type>-<first NAME_HASH hex digits of the MD5 of the file it was made from>". A
