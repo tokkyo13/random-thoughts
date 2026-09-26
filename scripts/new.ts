@@ -31,7 +31,7 @@ if (kind === 'journal' || kind === 'art') {
   fs.writeFileSync(file, JSON.stringify([...entries, entry], null, 2) + '\n');
   console.log(`added entry ${id} to ${file}`);
   console.log(`fill in title, description and url. cover takes the image name that`);
-  console.log(`"npm run img apply" assigns; while it is empty the list shows a frame`);
+  console.log(`"npm run img apply" assigns; while it is empty the list shows the text alone`);
 } else {
   console.error('usage: npm run new journal | art | work');
   process.exit(1);

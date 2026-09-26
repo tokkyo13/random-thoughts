@@ -29,15 +29,22 @@ const { entries, page, urls } = Astro.props;
     entries.length === 0 ? (
       <p class="entry-empty">まだ登録がありません</p>
     ) : (
-      <ul class="card-grid">
+      <ul class="entry-list">
         {entries.map(({ id, data }) => {
           const cover = optionalImage(data.cover && `work/${id}/${data.cover}`);
           return (
             <li>
-              <ExternalLink class="card" href={data.url}>
-                <div class="thumb">{cover && <img {...cover} sizes={SIZES.gridThumb} alt="" />}</div>
-                <h2 class="entry-title">{data.title}</h2>
-                <p class="description">{data.description}</p>
+              <ExternalLink class="entry-link" href={data.url}>
+                <div class="body">
+                  <h2 class="entry-title">{data.title}</h2>
+                  <p class="description">{data.description}</p>
+                </div>
+
+                {cover && (
+                  <div class="thumb">
+                    <img {...cover} sizes={SIZES.entryThumb} alt="" />
+                  </div>
+                )}
               </ExternalLink>
             </li>
           );

@@ -46,6 +46,6 @@ export const SIZES = {
   prose: '(min-width: 61rem) 56rem, 100vw',
   // A plate main gives the pictures the whole middle: the page less both rails and its gutters
   plate: '(min-width: 85rem) calc(100vw - 34.5rem), (min-width: 61rem) 56rem, 100vw',
-  journalThumb: '(max-width: 32rem) 100vw, 16rem', // stacks below 32rem
-  gridThumb: '(min-width: 61rem) 17.5rem, (min-width: 48rem) 33vw, (min-width: 32rem) 50vw, 100vw', // .card-grid: 3, 3, 2, 1 columns
+  entryThumb: 'min(16rem, 50vw)', // .entry-list: Journal and Work, up to half the row
+  artThumb: '(min-width: 61rem) 10.5rem, (min-width: 36rem) 33vw, 50vw', // .art-grid: 5 columns down to 2
 };

@@ -37,7 +37,7 @@
 
   /* Line height, by the role of the text it sets */
   --lh-body: 1.9; /* running text */
-  --lh-relaxed: 1.8; /* a card's description */
+  --lh-relaxed: 1.8; /* a work entry's description */
   --lh-snug: 1.7; /* list titles, the TOC, code */
   --lh-heading: 1.6; /* headings and meta rows */
   --lh-title: 1.5; /* a page title */
@@ -467,56 +467,43 @@ b {
   object-fit: cover;
 }
 
-/* A grid of cards, each one link: Work and Art. The list sets the thumbnail's ratio */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  column-gap: var(--col-gap);
-  row-gap: 0;
+/* One entry per row, each one link: Journal and Work. The text on the left, the cover on the
+   right at up to half the row, so the picture stays beside the title on a phone too */
+.entry-list {
   margin: 0;
   padding: 0;
   list-style: none;
-  /* Leaves one rule gap below the last row, as .entry-list does, whatever row is last */
-  margin-bottom: calc(var(--rule-gap) * -1);
-  /* Clips the rule above the first row and the overhang past the right edge, so no
-     :nth-child cases per column count are needed.
-     Tradeoff: :focus-visible on the edge columns loses its outer side; if that matters,
-     drop overflow and cancel the edges with :nth-child per column count */
-  overflow: hidden;
 }
 
-/* Space below only, so each rule sits mid-gap above the next row */
-.card-grid > li {
-  position: relative;
-  padding-bottom: calc(var(--rule-gap) * 2);
-}
-
-/* Runs on to the grid's right edge, so a row's rules join into one line that also spans the
-   empty cells after a short last row */
-.card-grid > li::before {
-  content: '';
-  position: absolute;
-  top: calc(var(--rule-gap) * -1);
-  left: 0;
-  right: -100vw;
+/* Rules between entries only */
+.entry-list > li + li {
   border-top: var(--rule);
 }
 
-@media (max-width: 48rem) {
-  .card-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.entry-list > li:first-child > .entry-link {
+  padding-top: 0;
 }
 
-@media (max-width: 32rem) {
-  .card-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.card {
-  display: block;
+.entry-link {
+  display: flex;
+  gap: var(--item-gap);
+  align-items: flex-start;
+  padding: var(--rule-gap) 0;
   text-decoration: none;
+}
+
+.entry-link .body {
+  flex: 1;
+  min-width: 0;
+}
+
+.entry-link .body > :first-child {
+  margin-top: 0;
+}
+
+/* No cover, no frame: the text takes the whole row */
+.entry-link .thumb {
+  flex: 0 0 min(16rem, 50%);
 }
 
 /* A column of links: the nav rail, the top page, the menu panel, an article's TOC.

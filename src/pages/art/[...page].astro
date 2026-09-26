@@ -28,13 +28,13 @@ const { pieces, page, urls } = Astro.props;
     pieces.length === 0 ? (
       <p class="entry-empty">まだイラストがありません</p>
     ) : (
-      <ul class="card-grid">
+      <ul class="art-grid">
         {pieces.map(({ id, data }) => {
           const cover = optionalImage(data.cover && `art/${id}/${data.cover}`);
           return (
             <li>
-              <a class="card" href={artUrl(id)}>
-                <div class="thumb">{cover && <img {...cover} sizes={SIZES.gridThumb} alt="" />}</div>
+              <a href={artUrl(id)}>
+                <div class="thumb">{cover && <img {...cover} sizes={SIZES.artThumb} alt="" />}</div>
                 <h2 class="entry-title">{data.title}</h2>
               </a>
             </li>
@@ -48,6 +48,49 @@ const { pieces, page, urls } = Astro.props;
 </BaseLayout>
 
 <style>
+  /* Columns of at least 8rem, but never fewer than two, which is what a phone gets, nor more
+     than five */
+  .art-grid {
+    --gap: var(--item-gap);
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fill,
+      minmax(clamp((100% - 4 * var(--gap)) / 5, 8rem, (100% - var(--gap)) / 2), 1fr)
+    );
+    column-gap: var(--gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    /* Leaves one rule gap below the last row, as .entry-list does, whatever row is last */
+    margin-bottom: calc(var(--rule-gap) * -1);
+    /* Clips the rule above the first row and the overhang past the right edge, so no
+       :nth-child cases per column count are needed.
+       Tradeoff: :focus-visible on the edge columns loses its outer side */
+    overflow: hidden;
+  }
+
+  /* Space below only, so each rule sits mid-gap above the next row */
+  .art-grid > li {
+    position: relative;
+    padding-bottom: calc(var(--rule-gap) * 2);
+  }
+
+  /* Runs on to the grid's right edge, so a row's rules join into one line that also spans the
+     empty cells after a short last row */
+  .art-grid > li::before {
+    content: '';
+    position: absolute;
+    top: calc(var(--rule-gap) * -1);
+    left: 0;
+    right: -100vw;
+    border-top: var(--rule);
+  }
+
+  .art-grid a {
+    display: block;
+    text-decoration: none;
+  }
+
   /* Square, not the 16/9 of the other lists: an illustration is as often tall as it is wide,
      and object-fit in global.css crops it from the center either way */
   .thumb {

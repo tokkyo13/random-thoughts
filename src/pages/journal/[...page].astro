@@ -46,7 +46,7 @@ const { posts, page, urls } = Astro.props;
 
                 {cover && (
                   <div class="thumb">
-                    <img {...cover} sizes={SIZES.journalThumb} alt="" />
+                    <img {...cover} sizes={SIZES.entryThumb} alt="" />
                   </div>
                 )}
               </a>
@@ -61,38 +61,6 @@ const { posts, page, urls } = Astro.props;
 </BaseLayout>
 
 <style>
-  .entry-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  /* Rules between entries only, as in .card-grid */
-  .entry-list > li + li {
-    border-top: var(--rule);
-  }
-
-  .entry-list > li:first-child > .entry-link {
-    padding-top: 0;
-  }
-
-  .entry-link {
-    display: flex;
-    gap: var(--item-gap);
-    align-items: flex-start;
-    padding: var(--rule-gap) 0;
-    text-decoration: none;
-  }
-
-  .thumb {
-    flex: 0 0 16rem;
-  }
-
-  .body {
-    flex: 1;
-    min-width: 0;
-  }
-
   .meta {
     display: flex;
     align-items: center;
@@ -108,16 +76,5 @@ const { posts, page, urls } = Astro.props;
     border: var(--rule);
     border-radius: var(--radius-pill);
     font-size: var(--fs-xs);
-  }
-
-  @media (max-width: 32rem) {
-    .entry-link {
-      flex-direction: column;
-    }
-
-    .thumb {
-      flex: none;
-      width: 100%;
-    }
   }
 </style>
