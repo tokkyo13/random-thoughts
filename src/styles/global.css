@@ -55,12 +55,12 @@
   /* The site logo, in the rail and on the top page. Paired with --fs-base text in both,
      so the two lay out to the same proportion */
   --logo-height: 2.5rem;
-  /* Where the content starts. The nav rail and an article's TOC share it, so the three line up.
+  /* Where the content starts. The nav rail and the control pane share it, so the three line up.
      It follows --gutter, so the margin above the content matches the one beside it */
   --page-top: var(--gutter);
-  /* The margin columns, the same width on both sides: the nav rail on the left, the TOC of
-     an article or the controls of an art entry on the right. Measured from the edge of the
-     screen inwards, which is where the frame lines stand and where the middle begins */
+  /* The margin columns, the same width on both sides: the nav rail on the left, the control
+     pane on the right. Measured from the edge of the screen inwards, which is where the frame
+     lines stand and where the middle begins */
   --rail-width: 16rem;
   /* For overlays that float above the page. The palette is dark, so plain black */
   --shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.35);
@@ -158,6 +158,22 @@ b {
 /* =========================================================
    Layout
    ========================================================= */
+/* The regions of the shell (see BaseLayout.astro), and everything about them that turns on
+   the width of the screen. 85rem is where the rails start and the menu goes. It is written
+   here alone, apart from the sizes of images/index.ts, because a media query cannot read a
+   variable: a part that differs between the two widths wears one of these */
+@media (width <= 85rem) {
+  .wide-only {
+    display: none;
+  }
+}
+
+@media (width > 85rem) {
+  .narrow-only {
+    display: none;
+  }
+}
+
 .site-main {
   flex: 1;
   width: 100%;
@@ -169,12 +185,62 @@ b {
   padding-bottom: calc(var(--float-bottom) + var(--control-touch) + var(--gutter));
 }
 
+/* A picture wants the screen more than the words do, so the page keeps a narrower margin
+   around it. --page-top is set again with it: a variable resolves where it is defined, so
+   the one on :root would keep the old gutter. The rails stand outside main, so they stay
+   level with each other */
+.site-main[data-main='plate'] {
+  --gutter: clamp(0.75rem, 2.5vw, 1.25rem);
+  --page-top: var(--gutter);
+}
+
+/* Top is the navigation alone, the whole of the page. It starts where the rail of any other
+   page starts, and with no rails to line up with, a narrow screen centres it instead */
+.site-top {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--page-top) var(--gutter);
+}
+
+@media (width <= 85rem) {
+  .site-top {
+    justify-content: center;
+  }
+}
+
+/* The control pane in the right rail. It stands where the nav rail starts, between the line
+   and the edge of the screen; each pane aligns itself in there, a list to the left and a set
+   of controls to the centre. The rest is what a pane reads to fit (the menu panel sets its
+   own in Menu.astro): a block of controls needs no inset of its own, and a button on the
+   page ground lifts off it with a fill and a border */
+.pane-rail {
+  position: fixed;
+  top: var(--page-top);
+  right: 0;
+  width: var(--rail-width);
+  max-height: calc(100dvh - var(--page-top) * 2);
+  overflow-y: auto;
+  padding: 0 1rem;
+  line-height: var(--lh-snug);
+  --pane-inset: 0;
+  --pane-button-bg: var(--surface);
+  --pane-button-border: var(--rule);
+}
+
+.pane-rail .nav-list li + li {
+  margin-top: var(--list-gap);
+}
+
 /* The rails take their width out of the page, so nothing of the middle runs under them. The
-   nav rail is always there; the right one only on a page that fills it, and a page without
-   takes that room for its middle instead. Either way the middle centres what it holds.
-   85rem is the width they start at: SiteHeader.astro, journal/[id], art/[id] and index.astro
-   repeat the number, because a media query cannot read a variable */
+   nav rail is always there; the right one only on a page with a control pane, and a page
+   without takes that room for its middle instead. Either way the middle centres what it holds */
 @media (width > 85rem) {
+  /* The pictures take the whole middle, which is what the rails leave of the page */
+  .site-main[data-main='plate'] {
+    max-width: none;
+  }
+
   body:not(.top) {
     padding-left: var(--rail-width);
   }

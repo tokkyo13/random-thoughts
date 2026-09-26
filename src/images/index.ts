@@ -44,8 +44,8 @@ export const optionalImage = (key: string | undefined, loading?: 'lazy' | 'eager
 // Each mirrors a layout in CSS. The page column is 56rem plus two gutters of at most 2.5rem: 61rem.
 export const SIZES = {
   prose: '(min-width: 61rem) 56rem, 100vw',
-  // An art page gives the pictures the whole middle: the page less both rails and gutters
-  gallery: '(min-width: 85rem) calc(100vw - 37rem), (min-width: 61rem) 56rem, 100vw',
+  // A plate main gives the pictures the whole middle: the page less both rails and its gutters
+  plate: '(min-width: 85rem) calc(100vw - 34.5rem), (min-width: 61rem) 56rem, 100vw',
   journalThumb: '(max-width: 32rem) 100vw, 16rem', // stacks below 32rem
   gridThumb: '(min-width: 61rem) 17.5rem, (min-width: 48rem) 33vw, (min-width: 32rem) 50vw, 100vw', // .card-grid: 3, 3, 2, 1 columns
 };

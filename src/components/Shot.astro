@@ -17,7 +17,7 @@ const counter = total > 1 ? `${n} / ${total}` : '';
 <figure class="frame" style={`--ratio: ${shot.width} / ${shot.height}`}>
   <img
     {...shot}
-    sizes={SIZES.gallery}
+    sizes={SIZES.plate}
     fetchpriority={n === 1 ? 'high' : undefined}
     alt={[title, counter].filter(Boolean).join(' ')}
   />

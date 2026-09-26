@@ -1,0 +1,227 @@
+---
+import type { SvgComponent } from 'astro/types';
+import Nav from './Nav.astro';
+import MenuIcon from '../../assets/icons/menu.svg';
+import Add from '../../assets/icons/add.svg';
+
+// The navigation and the control pane of a narrow screen, behind one button kept within thumb
+// reach. With a pane, the panel gets a second pane and tabs to switch between them, and it
+// opens on the control pane: the page is what the reader is in the middle of
+interface Props {
+  pane?: { label: string; icon: SvgComponent; html: string };
+}
+
+const { pane } = Astro.props;
+const PaneIcon = pane?.icon;
+---
+
+<details class="menu narrow-only">
+  <summary aria-label="メニュー">
+    <Add />
+  </summary>
+
+  <div class:list={['panel', { tabbed: pane }]}>
+    {
+      pane && (
+        <Fragment>
+          <input
+            class="visually-hidden"
+            type="radio"
+            name="pane"
+            id="pane-page"
+            aria-label={pane.label}
+            checked
+          />
+          <input class="visually-hidden" type="radio" name="pane" id="pane-nav" aria-label="メニュー" />
+
+          <div class="pane pane-page">
+            <Fragment set:html={pane.html} />
+          </div>
+        </Fragment>
+      )
+    }
+
+    <div class="pane pane-nav">
+      <Nav form="panel" />
+    </div>
+
+    {
+      pane && (
+        <div class="tabs">
+          <label class="quiet" for="pane-page">
+            {PaneIcon && <PaneIcon />}
+          </label>
+          <label class="quiet" for="pane-nav">
+            <MenuIcon />
+          </label>
+        </div>
+      )
+    }
+  </div>
+</details>
+
+<script>
+  const menu = document.querySelector<HTMLDetailsElement>('.menu');
+
+  if (menu) {
+    const close = () => {
+      menu.open = false;
+    };
+
+    // A link or a button has done what it was picked for, so the menu closes, as it does on a
+    // click outside. A switch stays open to be seen at work. A label in the panel forwards its
+    // click to the control it drives, and that one sits on the page: the second click is the
+    // browser passing the first one on, not the reader reaching outside the menu
+    document.addEventListener('click', (event) => {
+      const target = event.target as Element;
+      if (target.closest('.visually-hidden')) return;
+      if (target.closest('a, button') || !target.closest('.menu')) close();
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') close();
+    });
+
+    // However it closed, including the button itself, the next open starts on the page's pane
+    menu.addEventListener('toggle', () => {
+      const first = document.querySelector<HTMLInputElement>('#pane-page');
+      if (!menu.open && first) first.checked = true;
+    });
+  }
+</script>
+
+<style>
+  .menu {
+    position: fixed;
+    right: var(--gutter);
+    bottom: var(--float-bottom);
+    z-index: 10;
+  }
+
+  .menu summary {
+    display: grid;
+    place-items: center;
+    width: var(--control-touch);
+    height: var(--control-touch);
+    background: var(--surface);
+    border: var(--rule);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .menu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .menu summary :global(svg) {
+    width: var(--icon);
+    height: var(--icon);
+    fill: currentColor;
+  }
+
+  /* A plus turned an eighth of a turn is a cross */
+  .menu[open] summary :global(svg) {
+    transform: rotate(45deg);
+  }
+
+  /* Grows upward from the button, so the tabs and the nearest items stay under the thumb */
+  .panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + var(--nav-gap));
+    display: flex;
+    flex-direction: column;
+    /* One width whatever the pane holds, so switching tabs never resizes the panel */
+    width: min(15rem, calc(100vw - var(--gutter) * 2)); /* 240px */
+    max-height: 60dvh;
+    overflow: hidden; /* so the panes clip to the rounded corners */
+    overscroll-behavior: contain;
+    background: var(--surface);
+    border: var(--rule);
+    border-radius: var(--radius);
+  }
+
+  /* Without a control pane there are no tabs, and the nav pane is the whole panel */
+  .pane {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    /* A wheel over the menu stays in the menu, and never runs on into the page */
+    overscroll-behavior: contain;
+    padding: 0.5rem 0;
+
+    /* Ten rows at most. A row is a link line box plus its padding, and the last term is
+       this pane's own padding; the max-height above keeps the short-screen guard */
+    max-height: calc((var(--fs-base) * var(--lh-body) + 1rem) * 10 + 1rem);
+  }
+
+  /* What a control pane reads to fit in here (the right rail in global.css sets its own). A
+     block of controls takes the inset the rows below keep. The panel is --surface itself, so
+     a button stands out by its fill alone: a border darker than that fill would be the rail's
+     button turned inside out */
+  .pane-page {
+    --pane-inset: 0.5rem 1rem;
+    --pane-button-bg: var(--raised);
+    --pane-button-border: 0;
+  }
+
+  .tabbed .pane {
+    display: none;
+  }
+
+  #pane-page:checked ~ .pane-page,
+  #pane-nav:checked ~ .pane-nav {
+    display: flex;
+  }
+
+  /* Every column of links in here carries .nav-list, the nav of Nav.astro and a control pane
+     alike, so global.css holds their reset and their colors, and this their rows: each link
+     spans the panel, which is what a thumb aims at */
+  .panel :global(.nav-list a) {
+    display: block;
+    padding: 0.5rem 1rem;
+  }
+
+  /* The dark strip is the well the tabs sit in; only the open one lifts out of it */
+  .tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--bg);
+  }
+
+  /* A closed tab shows the well through it */
+  .tabs label {
+    display: grid;
+    place-items: center;
+    height: var(--control);
+    cursor: pointer;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  .tabs label :global(svg) {
+    width: var(--icon);
+    height: var(--icon);
+    fill: currentColor;
+  }
+
+  .menu summary,
+  .panel {
+    box-shadow: var(--shadow);
+  }
+
+  /* The open tab carries the pane's own surface down, unbroken, and hangs from it */
+  #pane-page:checked ~ .tabs label[for='pane-page'],
+  #pane-nav:checked ~ .tabs label[for='pane-nav'] {
+    color: var(--text);
+    background: var(--surface);
+  }
+
+  /* The radios are hidden, so the focus ring goes on the tab each one drives */
+  #pane-page:focus-visible ~ .tabs label[for='pane-page'],
+  #pane-nav:focus-visible ~ .tabs label[for='pane-nav'] {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+</style>

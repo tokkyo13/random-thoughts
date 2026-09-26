@@ -4,7 +4,8 @@ import { optionalImage, shareImage } from '../../images';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Shot from '../../components/Shot.astro';
-import Controls from '../../components/Controls.astro';
+import ArtControls from '../../components/pane/ArtControls.astro';
+import Tune from '../../assets/tune.svg';
 
 export async function getStaticPaths() {
   return (await listArt()).map((piece) => ({
@@ -23,12 +24,14 @@ const shots = piece.data.images.flatMap(
 const [first, ...rest] = shots;
 ---
 
-<BaseLayout title={title} description={description} image={shareImage(coverKey)} hasControls>
-  {
-    /* The margin is gone on a narrow viewport, so the menu carries the same controls there.
-       Only one of the two copies is ever on screen */
-    <Controls slot="controls" />
-  }
+<BaseLayout
+  title={title}
+  description={description}
+  image={shareImage(coverKey)}
+  main="plate"
+  pane={{ label: 'コントロール', icon: Tune }}
+>
+  <ArtControls slot="pane" />
 
   <div class="layout">
     {
@@ -36,9 +39,6 @@ const [first, ...rest] = shots;
          Shot.astro holds what it does to the pictures */
       <input class="visually-hidden fit" type="checkbox" id="fit" checked />
     }
-
-    {/* Until there is a margin to put it in, the menu carries it */}
-    <div class="side-controls"><Controls /></div>
 
     <div class="gallery">
       {first ? <Shot shot={first} n={1} total={shots.length} title={title} /> : <div class="thumb" />}
@@ -136,11 +136,11 @@ const [first, ...rest] = shots;
     });
 
     // Folding the rest back is for the title and description, which then sit right under the
-    // first picture: the view goes to the top, and the menu, if it held the button, closes
+    // first picture: the view goes to the top. The pane stands twice, so the button is in
+    // both; in the menu, the menu closes it after itself, as it does after any button
     for (const button of document.querySelectorAll('.collapse')) {
       button.addEventListener('click', () => {
         gallery.querySelector<HTMLDetailsElement>('.more')!.open = false;
-        document.querySelector<HTMLDetailsElement>('.menu')?.removeAttribute('open');
         scrollTo(0, 0);
       });
     }
@@ -152,14 +152,6 @@ const [first, ...rest] = shots;
      correct the same resize again on the next frame: the two together land a picture out */
   :global(body) {
     overflow-anchor: none;
-  }
-
-  /* A picture wants the screen more than the words do, so the page keeps a narrower margin
-     around it. --page-top is set again with it: a variable resolves where it is defined, so
-     the one on :root would keep the old gutter. The controls are inside and go up with it */
-  :global(.site-main) {
-    --gutter: clamp(0.75rem, 2.5vw, 1.25rem);
-    --page-top: var(--gutter);
   }
 
   .layout {
@@ -182,10 +174,6 @@ const [first, ...rest] = shots;
     position: fixed;
     top: 0;
     left: 0;
-  }
-
-  .side-controls {
-    display: none;
   }
 
   /* Its own block, so the lift below stays inside it: left to collapse, the negative margin
@@ -240,25 +228,5 @@ const [first, ...rest] = shots;
     margin: var(--item-gap) 0 0;
     letter-spacing: var(--ls-prose);
     line-height: var(--lh-relaxed);
-  }
-
-  /* Room for the margins (see the rails in global.css), and the width at which the nav
-     rail takes the menu back */
-  @media (width > 85rem) {
-    /* The pictures take the whole middle, which is what the rails leave of the page */
-    :global(.site-main) {
-      max-width: none;
-    }
-
-    /* The controls stand in the right margin, centred between the line the header draws
-       there and the edge of the screen. Below this width the menu takes them */
-    .side-controls {
-      display: block;
-      position: fixed;
-      top: var(--page-top); /* level with the nav rail on the other side */
-      right: 0;
-      width: var(--rail-width);
-      padding: 0 1rem;
-    }
   }
 </style>

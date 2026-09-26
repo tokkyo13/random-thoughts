@@ -1,0 +1,121 @@
+---
+import { SITE_TITLE, NAV_ITEMS } from '../../consts';
+import Logo from '../../assets/logo.svg';
+
+// The navigation, in the three forms the shell stands it in: the rail in the left margin of a
+// wide screen, a pane of the menu panel on a narrow one, and Top, which is nothing else
+interface Props {
+  form: 'rail' | 'panel' | 'top';
+}
+
+const { form } = Astro.props;
+
+const path = Astro.url.pathname;
+// A prefix match, so an article page (/journal/<id>/) marks Journal as current.
+// Top is the exception: '/' is a prefix of everything
+const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+
+// The logo is the way to Top, and the panel has no logo, so only the panel lists Top
+const items = form === 'panel' ? NAV_ITEMS : NAV_ITEMS.filter((item) => item.href !== '/');
+---
+
+<div class:list={{ 'wide-only': form === 'rail' }} data-form={form}>
+  {form === 'rail' && (
+    <a class="brand" href="/" aria-label={SITE_TITLE}>
+      <Logo />
+    </a>
+  )}
+
+  {/* Top is where the logo leads, so there it is only the mark */}
+  {form === 'top' && (
+    <div class="brand" role="img" aria-label={SITE_TITLE}>
+      <Logo />
+    </div>
+  )}
+
+  <nav aria-label="メインメニュー">
+    <ul class="nav-list">
+      {
+        items.map((item) => (
+          <li>
+            <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</div>
+
+<style>
+  /* Spans the viewport, so the dividing line runs its whole height; the padding puts the
+     logo back where --page-top wants it */
+  [data-form='rail'] {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    /* What the labels keep clear of the line down the rail */
+    --line-gap: 1rem;
+
+    width: var(--rail-width);
+    padding: var(--page-top) var(--line-gap) 0 var(--gutter);
+    border-right: var(--rule);
+  }
+
+  /* Top has no left edge to keep to, so it centres the same column the rail right-aligns */
+  [data-form='top'] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .brand :global(svg) {
+    display: block;
+    height: var(--logo-height);
+    width: auto;
+  }
+
+  [data-form='rail'] .brand {
+    display: flex;
+    justify-content: flex-end;
+    /* Halfway into the gap the labels keep, so the mark sits between the two of them */
+    margin-right: calc(var(--line-gap) / -2);
+    text-decoration: none;
+  }
+
+  /* The panel lays its rows out itself (see Menu.astro); the rail and Top share theirs */
+  :is([data-form='rail'], [data-form='top']) ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--nav-gap);
+    margin-top: var(--nav-offset);
+  }
+
+  [data-form='rail'] ul {
+    align-items: flex-end;
+  }
+
+  [data-form='top'] ul {
+    align-items: center;
+  }
+
+  /* The colors come from .nav-list in global.css */
+  :is([data-form='rail'], [data-form='top']) a {
+    display: block;
+    position: relative;
+    letter-spacing: var(--ls-wide);
+  }
+
+  /* The mark for the page you are on is the rail's own: a line standing against the one down
+     the rail, in the gap the labels already keep from it, so the label itself stays put */
+  [data-form='rail'] a[aria-current='page']::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: calc(var(--line-gap) * -1);
+    border-right: calc(var(--underline) * 1.5) solid var(--accent);
+  }
+</style>

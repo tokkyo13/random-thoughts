@@ -1,23 +1,34 @@
 ---
+import type { SvgComponent } from 'astro/types';
 import '../styles/global.css';
-import SiteHeader from '../components/SiteHeader.astro';
+import Nav from '../components/shell/Nav.astro';
+import Menu from '../components/shell/Menu.astro';
 import { SITE_LANG, SITE_TITLE } from '../consts';
 
+// The shell every page stands in: the navigation, main, and a control pane for how main is
+// shown. Top is the navigation alone. A wide screen gives the navigation and the pane a rail
+// each; a narrow one folds both into the menu, where the pane comes first
 interface Props {
   title?: string;
   description?: string;
   // Absolute URL of the picture a link preview should carry. Without one it carries none
   image?: string;
-  // Whether the page fills its slot of the menu panel. A slot holding a false expression
-  // still counts as handed over, so the page says so itself
-  hasToc?: boolean;
-  hasControls?: boolean;
+  // How main is shown: prose keeps to the width text is read at, plate gives a picture the
+  // whole middle and a narrower margin (see .site-main in global.css)
+  main?: 'prose' | 'plate';
+  // The control pane, named and drawn for its tab in the menu. Its content comes in the pane
+  // slot, which a page may fill whether or not it has one: a slot holding a false expression
+  // still counts as handed over, so this says whether there is a pane
+  pane?: { label: string; icon: SvgComponent };
 }
 
-const { title, description, image, hasToc = false, hasControls = false } = Astro.props;
-// Top lays itself out and carries no rails, the same call SiteHeader makes
+const { title, description, image, main = 'prose', pane } = Astro.props;
 const isTop = Astro.url.pathname === '/';
 const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
+
+// Rendered once and stood in both places, the rail and the menu. Only one of the two is ever
+// on screen, and anything the pane holds is there twice: it can carry no id and no script
+const shown = pane && { ...pane, html: await Astro.slots.render('pane') };
 ---
 
 <!doctype html>
@@ -41,14 +52,30 @@ const pageTitle = title ? `${title} | ${SITE_TITLE}` : SITE_TITLE;
       href="/rss.xml"
     />
   </head>
-  <body class:list={{ top: isTop, railed: hasToc || hasControls }}>
-    <SiteHeader hasToc={hasToc} hasControls={hasControls}>
-      <slot name="toc" slot="toc" />
-      <slot name="controls" slot="controls" />
-    </SiteHeader>
+  <body class:list={{ top: isTop, railed: shown }}>
+    {
+      isTop ? (
+        <div class="site-top">
+          <Nav form="top" />
+        </div>
+      ) : (
+        <Fragment>
+          <header>
+            <Nav form="rail" />
+            <Menu pane={shown} />
+          </header>
 
-    <main class="site-main">
-      <slot />
-    </main>
+          {shown && (
+            <aside class="pane-rail wide-only">
+              <Fragment set:html={shown.html} />
+            </aside>
+          )}
+
+          <main class="site-main" data-main={main}>
+            <slot />
+          </main>
+        </Fragment>
+      )
+    }
   </body>
 </html>

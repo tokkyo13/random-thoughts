@@ -4,11 +4,13 @@ import { listPosts } from '../../posts';
 import { optionalImage, shareImage, SIZES } from '../../images';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
-import Fig from '../../components/Fig.astro';
-import Note from '../../components/Note.astro';
-import ProseLink from '../../components/ProseLink.astro';
-import Code from '../../components/Code.astro';
-import Pre from '../../components/Pre.astro';
+import Fig from '../../components/mdx/Fig.astro';
+import Note from '../../components/mdx/Note.astro';
+import ProseLink from '../../components/mdx/ProseLink.astro';
+import Code from '../../components/mdx/Code.astro';
+import Pre from '../../components/mdx/Pre.astro';
+import Toc from '../../components/pane/Toc.astro';
+import TocIcon from '../../assets/icons/toc.svg';
 
 export async function getStaticPaths() {
   return (await listPosts()).map((post) => ({
@@ -28,89 +30,36 @@ const cover = optionalImage(coverKey, 'eager');
   title={post.data.title}
   description={post.data.description}
   image={shareImage(coverKey)}
-  hasToc={toc.length > 0}
+  pane={toc.length > 0 ? { label: '目次', icon: TocIcon } : undefined}
 >
-  {
-    /* The same list the side TOC holds. It fills the menu where the margin is too narrow */
-    toc.length > 0 && (
-      <nav slot="toc" aria-label="目次">
-        <ul class="nav-list">
-          {toc.map((h) => (
-            <li>
-              <a href={`#${h.slug}`}>{h.text}</a>
-            </li>
-          ))}
-        </ul>
-      </nav>
-    )
-  }
+  <Toc slot="pane" headings={toc} />
 
   <article>
-      <header class="item-head">
-        <p>
-          <FormattedDate date={post.data.pubDate} />
-        </p>
+    <header class="item-head">
+      <p>
+        <FormattedDate date={post.data.pubDate} />
+      </p>
 
-        <h1>{post.data.title}</h1>
-      </header>
+      <h1>{post.data.title}</h1>
+    </header>
 
-      <div class="prose">
-        {
-          cover && (
-            <figure>
-              <img {...cover} sizes={SIZES.prose} fetchpriority="high" alt="" />
-            </figure>
-          )
-        }
-        <Content components={{ Fig, Note, Code, pre: Pre, a: ProseLink }} />
-      </div>
-    </article>
-
-    {
-      toc.length > 0 && (
-        <aside class="toc">
-          <nav aria-label="目次">
-            <ul class="nav-list">
-              {toc.map((h) => (
-                <li>
-                  <a href={`#${h.slug}`}>{h.text}</a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </aside>
-      )
-    }
+    <div class="prose">
+      {
+        cover && (
+          <figure>
+            <img {...cover} sizes={SIZES.prose} fetchpriority="high" alt="" />
+          </figure>
+        )
+      }
+      <Content components={{ Fig, Note, Code, pre: Pre, a: ProseLink }} />
+    </div>
+  </article>
 </BaseLayout>
 
 <style>
-  /* The right margin, against the edge of the screen and just inside the line the header
-     draws there. The nav rail is its twin on the left, and the article keeps the middle */
-  .toc {
-    position: fixed;
-    top: var(--page-top); /* level with the nav rail on the other side */
-    right: 0;
-    width: var(--rail-width);
-    padding: 0 var(--gutter) 0 1rem;
-    max-height: calc(100dvh - var(--page-top) * 2);
-    overflow-y: auto;
-    line-height: var(--lh-snug);
-  }
-
-  .toc li + li {
-    margin-top: var(--list-gap);
-  }
-
   /* Nothing covers the top of the page any more, so a heading only needs breathing room */
   .prose :global(:is(h1, h2, h3)) {
     scroll-margin-top: 1rem;
-  }
-
-  /* No room for the margins (see the rails in global.css): the menu carries the list */
-  @media (max-width: 85rem) {
-    .toc {
-      display: none;
-    }
   }
 
   .item-head {

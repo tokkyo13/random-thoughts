@@ -1,9 +1,9 @@
 ---
-// The controls of an art entry. They are drawn twice: in the page's right margin, and in the
-// menu panel that takes over where the margin is too narrow. Both switches are labels for the
-// one checkbox the page holds, so the two can never disagree. Fitting starts on: a tall
-// picture is worth more whole than large. The button folds the rest of the pictures back
-// again, and the page's script does that for both copies.
+// The control pane of an art entry. The shell stands it twice, in the right rail and in the
+// menu panel, so it holds no script and no id: both switches are labels for the one checkbox
+// the page holds, so the two can never disagree, and the page's script drives both buttons.
+// Fitting starts on: a tall picture is worth more whole than large. Centred, as a set of
+// controls is, wherever it stands.
 ---
 
 <section class="controls">
@@ -22,6 +22,7 @@
     display: grid;
     width: fit-content;
     margin-inline: auto;
+    padding: var(--pane-inset);
     gap: var(--item-gap);
   }
 
@@ -30,19 +31,13 @@
     display: none;
     height: var(--control);
     padding: 0 1rem;
-    background: var(--surface); /* the colours of the button it undoes, with .quiet */
-    border: var(--rule);
+    /* The colours of the button it undoes, with .quiet, lifted off whatever pane holds it */
+    background: var(--pane-button-bg);
+    border: var(--pane-button-border);
     border-radius: var(--radius-pill);
     font: inherit;
     letter-spacing: var(--ls-body);
     cursor: pointer;
-  }
-
-  /* The menu panel is --surface itself, so there the button stands out by its fill alone. A
-     border darker than that fill would be the rail's button turned inside out, so it goes */
-  :global(.menu) .collapse {
-    background: var(--raised);
-    border: 0;
   }
 
   :global(body:has(.more[open])) .collapse {

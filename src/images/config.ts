@@ -32,7 +32,7 @@ type AreaSpec = {
 
 // A perItem area also needs an entry in ITEM_SOURCES in scripts/img.ts.
 // 1792 is the most any layout asks for on an ordinary screen: the prose column (56rem) at 2x,
-// and the art page's middle on a 1920px screen (about 1330px) at 1x.
+// and the middle of an art page (a plate main) on a 1920px screen (about 1370px) at 1x.
 export const AREAS: Record<string, AreaSpec> = {
   journal: {
     perItem: true,

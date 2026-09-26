@@ -1,0 +1,21 @@
+---
+// The control pane of an article: its top-level headings. Left aligned, as a list reads; the
+// place it stands in lays out the rows (see .nav-list).
+interface Props {
+  headings: { slug: string; text: string }[];
+}
+
+const { headings } = Astro.props;
+---
+
+<nav aria-label="目次">
+  <ul class="nav-list">
+    {
+      headings.map((h) => (
+        <li>
+          <a href={`#${h.slug}`}>{h.text}</a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
