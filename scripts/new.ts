@@ -37,5 +37,5 @@ if (kind === 'journal' || kind === 'art') {
   process.exit(1);
 }
 
-fs.mkdirSync(`r2-clone/${kind}/${id}`, { recursive: true });
-console.log(`created r2-clone/${kind}/${id}/`);
+fs.mkdirSync(`content/image/${kind}/${id}`, { recursive: true });
+console.log(`created content/image/${kind}/${id}/`);

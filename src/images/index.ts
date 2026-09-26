@@ -4,8 +4,8 @@ import { IMAGE_ORIGIN, shareKey, variantKey, type Manifest } from './config';
 const { images } = manifest as Manifest;
 
 /**
- * <img> attributes for a key like "journal/1789084800/figure-a3f91c2b". Write the key as a
- * whole string literal where possible: "npm run img gc" finds references by searching for it.
+ * <img> attributes for a key like "journal/1789084800/figure-a3f91c2b": an entry's area and id,
+ * and an image name the entry holds. "npm run img gc" keeps an image while its entry names it.
  * Set loading here, not on the <img>: Astro would emit the attribute twice.
  */
 export function image(key: string, loading: 'lazy' | 'eager' = 'lazy') {

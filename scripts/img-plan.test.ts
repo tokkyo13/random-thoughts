@@ -14,8 +14,7 @@ const file = (dir: string, name: string, md5 = MD5) => ({ dir, name, md5, size: 
 
 test('image directories follow AREAS', () => {
   assert.equal(areaOf(J), 'journal');
-  assert.equal(areaOf('home'), 'home');
-  for (const bad of ['journal', 'journal/abc', 'home/1789139909', 'gallery/1789139909', `${J}/sub`, '']) {
+  for (const bad of ['journal', 'journal/abc', 'gallery/1789139909', `${J}/sub`, '']) {
     assert.equal(areaOf(bad), undefined, bad);
   }
 });
@@ -61,8 +60,8 @@ test('the file an AVIF was made from is set aside for gc, and nothing else is', 
 });
 
 test('areas with one type give every file that type', () => {
-  const p = planSync([file('work/1789139901', 'thumb.png'), file('home', 'figure.jpg')], { images: {} }, new Map());
-  assert.deepEqual(p.uploads.map((u) => `${u.dir}/${u.stem}`), ['home/cover-a1b2c3d4', 'work/1789139901/cover-a1b2c3d4']);
+  const p = planSync([file('work/1789139901', 'figure.png')], { images: {} }, new Map());
+  assert.deepEqual(p.uploads.map((u) => `${u.dir}/${u.stem}`), ['work/1789139901/cover-a1b2c3d4']);
 });
 
 test('a synced image needs nothing', () => {
@@ -100,15 +99,15 @@ test('bad locations and formats are errors, never uploads', () => {
 
 test('gc deletes only what nothing references, and says why', () => {
   const images = Object.fromEntries(
-    [`${J}/figure-a1b2c3d4`, `${J}/figure-ffff0000`, 'journal/1789000000/cover-a1b2c3d4', 'home/cover-a1b2c3d4', 'work/1789139901/cover-a1b2c3d4']
+    [`${J}/figure-a1b2c3d4`, `${J}/figure-ffff0000`, 'journal/1789000000/cover-a1b2c3d4', 'work/1789139901/cover-a1b2c3d4']
       .map((k) => [k, entry]),
   );
   const items = {
-    journal: new Map([['1789139909', '<Fig src="figure-a1b2c3d4" />']]),
+    // The name counts only for its own item: the other article's cover shares it, and still goes
+    journal: new Map([['1789139909', '<Fig src="figure-a1b2c3d4" /> cover-a1b2c3d4']]),
     work: new Map([['1789139901', JSON.stringify({ id: 1789139901, cover: 'cover-a1b2c3d4' })]]),
   };
-  const refs = collectRefs(items, ["image('home/cover-a1b2c3d4')"]);
-  assert.deepEqual(planGc({ images }, refs, items), [
+  assert.deepEqual(planGc({ images }, collectRefs(items), items), [
     { key: 'journal/1789000000/cover-a1b2c3d4', reason: 'item missing' },
     { key: `${J}/figure-ffff0000`, reason: 'unreferenced' },
   ]);

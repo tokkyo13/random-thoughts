@@ -9,9 +9,8 @@ node_modules/
 # credential files; the *.env.example templates stay tracked. See README.md
 *.env
 
-# local clone of the R2 image bucket; only the root .gitkeep is tracked, the rest is restored from R2
-r2-clone/*
-!r2-clone/.gitkeep
+# the images themselves, restored from R2; only the manifest beside them is tracked
+content/image/*/
 
 # personal settings; see "Claude Code" in README.md for the recommended .claude/settings.json
 .claude/

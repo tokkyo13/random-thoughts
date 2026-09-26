@@ -5,21 +5,18 @@ const EXT_ALIASES: Record<string, string> = { jpeg: 'jpg', tiff: 'tif' };
 const EXTS = new Set(['jpg', 'png', 'webp', 'avif', 'gif', 'tif']);
 
 const TYPES = [...new Set(Object.values(AREAS).flatMap((a) => Object.keys(a.types)))].join('|');
-const DIRS = Object.entries(AREAS).map(([name, a]) => (a.perItem ? `${name}/\\d{10}` : name)).join('|');
-const HASH = `[0-9a-f]{${NAME_HASH}}`;
-const IMAGE_NAME = new RegExp(`\\b(?:${TYPES})-${HASH}\\b`, 'g');
-const FULL_KEY = new RegExp(`\\b(?:${DIRS})/(?:${TYPES})-${HASH}\\b`, 'g');
+const IMAGE_NAME = new RegExp(`\\b(?:${TYPES})-[0-9a-f]{${NAME_HASH}}\\b`, 'g');
 
 export type LocalFile = { dir: string; name: string; md5: string; size: number };
-// Made from "from": a dropped-in file for an upload, the AVIF in r2-clone/ for a repair.
+// Made from "from": a dropped-in file for an upload, the AVIF in content/image/ for a repair.
 export type Upload = { dir: string; from: string; stem: string; md5: string };
 export type Download = { key: string; entry: ImageEntry };
 
 export type SyncPlan = {
   uploads: Upload[]; // not in the manifest
   repairs: Upload[]; // in the manifest, objects missing on R2
-  downloads: Download[]; // in the manifest, missing in r2-clone/
-  imported: LocalFile[]; // files an AVIF in r2-clone/ was made from; gc deletes them
+  downloads: Download[]; // in the manifest, missing in content/image/
+  imported: LocalFile[]; // files an AVIF in content/image/ was made from; gc deletes them
   warnings: string[];
   errors: string[];
   // Image directory -> its image names, in the order the local file names sort. It is the
@@ -32,18 +29,16 @@ export type CoverCopy = { dir: string; from: string; to: string };
 
 export type Deletion = { key: string; reason: string };
 
-/** Per-item area -> item id -> the item's text (an article's source, a work entry as JSON). */
+/** Area -> item id -> the item's text (an article's source, a work entry as JSON). */
 export type Items = Record<string, Map<string, string>>;
 
 /** "journal/1789139909/figure-a3f91c2b" -> ["journal/1789139909", "figure-a3f91c2b"] */
 export const splitKey = (key: string) => [key.slice(0, key.lastIndexOf('/')), key.slice(key.lastIndexOf('/') + 1)] as const;
 
-/** "journal/<10 digits>" -> "journal", "home" -> "home"; undefined if not a valid image directory. */
+/** "journal/<10 digits>" -> "journal"; undefined if not a valid image directory. */
 export function areaOf(dir: string): string | undefined {
   const [area, id, ...rest] = dir.split('/');
-  const spec = AREAS[area];
-  if (!spec || rest.length > 0) return undefined;
-  return (spec.perItem ? /^\d{10}$/.test(id ?? '') : id === undefined) ? area : undefined;
+  return AREAS[area] && /^\d{10}$/.test(id ?? '') && rest.length === 0 ? area : undefined;
 }
 
 const typesOf = (dir: string) => Object.keys(AREAS[areaOf(dir)!].types);
@@ -152,7 +147,7 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
     }
   }
   if (plan.imported.length > 0) {
-    plan.warnings.push(`${plan.imported.length} file(s) in r2-clone/ already made into AVIF; "npm run img gc" deletes them`);
+    plan.warnings.push(`${plan.imported.length} file(s) in content/image/ already made into AVIF; "npm run img gc" deletes them`);
   }
 
   return plan;
@@ -220,19 +215,15 @@ export function writeNames(text: string, names: string[]): WriteResult {
 }
 
 /**
- * A bare name counts for its own item's directory; a full key counts anywhere. Any occurrence
- * counts, even in a comment, so a mistake keeps an image rather than deleting one.
- * A key built at runtime ("home/cover-" + n) is invisible here.
+ * An image is referenced when its item's text names it. Any occurrence counts, even in a
+ * comment, so a mistake keeps an image rather than deleting one.
  */
-export function collectRefs(items: Items, sources: string[]): Set<string> {
+export function collectRefs(items: Items): Set<string> {
   const refs = new Set<string>();
   for (const [area, byId] of Object.entries(items)) {
     for (const [id, text] of byId) {
       for (const name of text.match(IMAGE_NAME) ?? []) refs.add(`${area}/${id}/${name}`);
     }
-  }
-  for (const text of [...sources, ...Object.values(items).flatMap((m) => [...m.values()])]) {
-    for (const key of text.match(FULL_KEY) ?? []) refs.add(key);
   }
   return refs;
 }
@@ -251,8 +242,7 @@ export function planGc(manifest: Manifest, refs: Set<string>, items: Items): Del
   for (const key of Object.keys(manifest.images).sort()) {
     if (refs.has(key)) continue;
     const [area, id] = key.split('/');
-    const itemMissing = AREAS[area]?.perItem && !items[area]?.has(id);
-    deletions.push({ key, reason: itemMissing ? 'item missing' : 'unreferenced' });
+    deletions.push({ key, reason: items[area]?.has(id) ? 'unreferenced' : 'item missing' });
   }
   return deletions;
 }

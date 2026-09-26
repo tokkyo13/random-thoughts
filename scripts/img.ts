@@ -1,4 +1,4 @@
-// Syncs r2-clone/ with R2 and keeps content/image/manifest.json in step. See README.md.
+// Syncs the images in content/image/ with R2 and keeps its manifest.json in step. See README.md.
 // plan and apply never delete. gc runs only when in sync, and deletes only after a typed
 // confirmation in an interactive terminal.
 import fs from 'node:fs';
@@ -13,8 +13,8 @@ import {
   type CoverCopy, type Items, type LocalFile, type SyncPlan,
 } from './img-plan.ts';
 
-const ROOT = 'r2-clone';
-const MANIFEST = 'content/image/manifest.json';
+const ROOT = 'content/image';
+const MANIFEST = `${ROOT}/manifest.json`;
 const CREDENTIALS = 'creds/r2.env';
 const CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
@@ -81,8 +81,9 @@ const avif = (buf: Buffer, width: number) => sharp(buf).rotate().resize({ width 
 function scanLocal(): LocalFile[] {
   return (fs.readdirSync(ROOT, { recursive: true }) as string[])
     .map((f) => f.split(path.sep).join('/'))
-    // Skips .gitkeep and anything inside a dot directory.
-    .filter((rel) => !rel.split('/').some((s) => s.startsWith('.')) && fs.statSync(path.join(ROOT, rel)).isFile())
+    // Skips the manifest beside the images, dot files and anything inside a dot directory.
+    .filter((rel) => rel !== path.posix.basename(MANIFEST) && !rel.split('/').some((s) => s.startsWith('.')))
+    .filter((rel) => fs.statSync(path.join(ROOT, rel)).isFile())
     .map((rel) => {
       const buf = fs.readFileSync(path.join(ROOT, rel));
       const dir = path.posix.dirname(rel);
@@ -167,7 +168,7 @@ async function main() {
     plan = planSync(scanLocal(), manifest, remote);
   }
 
-  // An upload makes every variant from the dropped-in file and keeps the largest in r2-clone/;
+  // An upload makes every variant from the dropped-in file and keeps the largest in content/image/;
   // the dropped-in file stays until gc. A repair makes them again from that largest one.
   for (const u of [...plan.uploads, ...plan.repairs]) {
     const key = `${u.dir}/${u.stem}`;
@@ -222,7 +223,7 @@ function writeBack(id: string, names: string[]) {
   if (problem) console.log(`! ${file} ${problem}; add by hand: ${names.join(', ')}`);
 }
 
-// For each perItem area in AREAS: item id -> the text to search for image names.
+// For each area in AREAS: item id -> the text to search for image names.
 const mdxItems = (area: string) => () =>
   new Map(
     fs.readdirSync(`content/${area}`)
@@ -242,19 +243,12 @@ async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncP
   }
 
   const items: Items = {};
-  for (const [area, spec] of Object.entries(AREAS)) {
-    if (!spec.perItem) continue;
+  for (const area of Object.keys(AREAS)) {
     const source = ITEM_SOURCES[area];
     if (!source) fail(`No item source for area "${area}" in scripts/img.ts; cannot tell what is referenced.`);
     items[area] = source();
   }
-  const sources = ['src', 'content']
-    .flatMap((dir) => (fs.readdirSync(dir, { recursive: true }) as string[]).map((f) => path.join(dir, f)))
-    .map((f) => f.split(path.sep).join('/'))
-    // The manifest lists every key and would keep everything alive.
-    .filter((f) => /\.(astro|ts|tsx|js|mjs|md|mdx|json)$/.test(f) && f !== MANIFEST && fs.statSync(f).isFile())
-    .map(read);
-  const deletions = planGc(manifest, collectRefs(items, sources), items);
+  const deletions = planGc(manifest, collectRefs(items), items);
   const strays = planStrays(manifest, remote);
   const imported = plan.imported.map((f) => `${f.dir}/${f.name}`);
   if (deletions.length + strays.length + imported.length === 0) return console.log('Nothing to delete.');
@@ -288,7 +282,7 @@ async function gc(bucket: ReturnType<typeof r2>, manifest: Manifest, plan: SyncP
 
   for (const { key } of deletions) {
     const entry = manifest.images[key];
-    // If interrupted, the next apply makes the objects again from the AVIF in r2-clone/
+    // If interrupted, the next apply makes the objects again from the AVIF in content/image/
     // (still present), so nothing is lost; run gc again.
     for (const k of objectKeys(key, entry)) await bucket.delete(k);
     fs.rmSync(path.join(ROOT, `${key}.avif`), { force: true });
