@@ -7,7 +7,7 @@ import crypto from 'node:crypto';
 import readline from 'node:readline/promises';
 import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
-import { AREAS, BUCKET, NAME_HASH, SHARE_WIDTH, shareKey, variantKey, type Manifest } from '../src/images/config.ts';
+import { AREAS, BUCKET, NAME_HASH, SHARE_WIDTH, shareKey, variantKey, type Manifest } from '../src/image/config.ts';
 import {
   collectRefs, objectKeys, planCovers, planGc, planStrays, planSync, splitKey, variantWidths, writeNames,
   type CoverCopy, type Items, type LocalFile, type SyncPlan,

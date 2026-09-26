@@ -1,7 +1,7 @@
 ---
 import { render } from 'astro:content';
-import { listPosts } from '../../posts';
-import { optionalImage, shareImage, SIZES } from '../../images';
+import { listJournal } from '../../journal';
+import { optionalImage, shareImage, SIZES } from '../../image';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Fig from '../../components/mdx/Fig.astro';
@@ -13,7 +13,7 @@ import Toc from '../../components/pane/Toc.astro';
 import TocIcon from '../../assets/icons/toc.svg';
 
 export async function getStaticPaths() {
-  return (await listPosts()).map((post) => ({
+  return (await listJournal()).map((post) => ({
     params: { id: post.id },
     props: { post },
   }));

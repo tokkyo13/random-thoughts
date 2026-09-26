@@ -1,15 +1,15 @@
 ---
-import { journalUrl, listPosts } from '../../posts';
+import { journalUrl, listJournal } from '../../journal';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import PageHeader from '../../components/PageHeader.astro';
 import Pager from '../../components/Pager.astro';
-import { optionalImage, SIZES } from '../../images';
+import { optionalImage, SIZES } from '../../image';
 import { PER_PAGE } from '../../consts';
 
 // /journal/  /journal/2/
 export async function getStaticPaths() {
-  const posts = await listPosts();
+  const posts = await listJournal();
   const count = Math.max(1, Math.ceil(posts.length / PER_PAGE));
   const urls = Array.from({ length: count }, (_, i) => (i === 0 ? '/journal/' : `/journal/${i + 1}/`));
 

@@ -1,5 +1,5 @@
 // Planning logic for img.ts, kept free of I/O so img-plan.test.ts can check every rule.
-import { AREAS, NAME_HASH, SHARE_TYPE, shareKey, variantKey, type ImageEntry, type Manifest } from '../src/images/config.ts';
+import { AREAS, NAME_HASH, SHARE_TYPE, shareKey, variantKey, type ImageEntry, type Manifest } from '../src/image/config.ts';
 
 const EXT_ALIASES: Record<string, string> = { jpeg: 'jpg', tiff: 'tif' };
 const EXTS = new Set(['jpg', 'png', 'webp', 'avif', 'gif', 'tif']);

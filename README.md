@@ -34,13 +34,13 @@ src/
   layouts/  pages/  styles/
   consts.ts           site-wide constants that are not content
   content.config.ts   content schemas
-  images/             image areas, widths and bucket (config.ts); image() (index.ts)
+  image/              image areas, widths and bucket (config.ts); image() (index.ts)
 scripts/              img.ts and img-plan.ts (image sync), new.ts, tests
 creds/                r2.env (not in Git) and its template
 LICENSES/  REUSE.toml the license of every file
 ```
 
-Everything particular to this site lives in `content/`, and nothing in `src/` or `scripts/` names it. Each kind of definition has one home: content schemas in `src/content.config.ts`, image areas in `src/images/config.ts`, constants in `src/consts.ts`.
+Everything particular to this site lives in `content/`, and nothing in `src/` or `scripts/` names it. Each kind of definition has one home: content schemas in `src/content.config.ts`, image areas in `src/image/config.ts`, constants in `src/consts.ts`.
 
 ## Content
 
@@ -119,7 +119,7 @@ An array, shown in array order.
 
 ### Areas and names
 
-Every image belongs to one entry. Its key is `<area>/<id>/<name>`: the entry's kind, the entry's `<id>`, and the image name. The areas are defined in `AREAS` in `src/images/config.ts`:
+Every image belongs to one entry. Its key is `<area>/<id>/<name>`: the entry's kind, the entry's `<id>`, and the image name. The areas are defined in `AREAS` in `src/image/config.ts`:
 
 | Area | Entry | Image types |
 | --- | --- | --- |
@@ -161,7 +161,7 @@ A new area goes in `AREAS`, and in `ITEM_SOURCES` in `scripts/img.ts`, which tel
 
 - `creds/r2.env`: copy `creds/r2.env.example` and fill in an R2 API token with Object Read & Write on the bucket. Ignored by Git.
 - `content/site/site.json`: the site URL and the image origin.
-- `src/images/config.ts`: the bucket name.
+- `src/image/config.ts`: the bucket name.
 - `wrangler.jsonc`: the domain.
 
 With [Claude Code](https://docs.claude.com/en/docs/claude-code), deny read access to the credentials in `.claude/settings.json`:

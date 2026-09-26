@@ -1,4 +1,4 @@
-// Shared by the site (src/images/index.ts) and the sync tool (scripts/img.ts).
+// Shared by the site (src/image/index.ts) and the sync tool (scripts/img.ts).
 
 import site from '../../content/site/site.json' with { type: 'json' };
 

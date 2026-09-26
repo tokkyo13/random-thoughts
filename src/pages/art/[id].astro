@@ -1,11 +1,11 @@
 ---
 import { listArt } from '../../art';
-import { optionalImage, shareImage } from '../../images';
+import { optionalImage, shareImage } from '../../image';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Shot from '../../components/Shot.astro';
 import ArtControls from '../../components/pane/ArtControls.astro';
-import Tune from '../../assets/tune.svg';
+import Tune from '../../assets/icons/tune.svg';
 
 export async function getStaticPaths() {
   return (await listArt()).map((piece) => ({

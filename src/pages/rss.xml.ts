@@ -1,13 +1,13 @@
 import rss from '@astrojs/rss';
 import type { APIContext } from 'astro';
-import { journalUrl, listPosts } from '../posts';
+import { journalUrl, listJournal } from '../journal';
 import { listArt, artUrl } from '../art';
 import site from '../../content/site/site.json';
 
 // One feed for the whole site, newest first. No article bodies: MDX components would have to
 // be rendered for feed readers.
 export async function GET(context: APIContext) {
-  const [posts, pieces] = await Promise.all([listPosts(), listArt()]);
+  const [posts, pieces] = await Promise.all([listJournal(), listArt()]);
 
   const items = [
     ...posts.map((post) => ({
