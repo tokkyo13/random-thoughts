@@ -78,7 +78,7 @@ Each key is a label holding its `url`; key order is display order. A path stays 
 | `title` | yes | Title |
 | `description` | | Description for the feed |
 | `pubDate` | yes | Publication date; lists are sorted by it |
-| `cover` | | Cover image name |
+| `cover` | | Thumbnail and link preview image |
 | `draft` | | `true` excludes the article from production builds |
 
 These components are available without an import:
@@ -113,7 +113,7 @@ An array, shown in array order.
 | `title` | yes | Name of the work |
 | `description` | yes | Description |
 | `url` | yes | Where the work is published |
-| `cover` | | Cover image name |
+| `cover` | | Thumbnail and link preview image |
 
 ## Images
 
@@ -134,8 +134,9 @@ An image is named `<type>-<hash>`, such as `figure-a3f91c2b`: the first eight he
 One public bucket, served from `imageOrigin`, with `Cache-Control: public, max-age=31536000, immutable`:
 
 - `<key>.<width>w.avif`: variants, at the widths of the area and type. The largest is capped by the last width, and `content/image/<key>.avif` keeps a copy.
+- `<key>.<width>x<height>.avif`: covers only, thumbnails for the lists. The frame of the area's list at 1x, 2x and 3x, cut from the middle. A cover made at that ratio is shown whole.
 - `<key>.share.jpg`: covers only, for link previews.
-- `content/image/manifest.json` records each image's dimensions, hashes and widths. The build reads only this file.
+- `content/image/manifest.json` records each image's dimensions, hashes, widths and thumbnails. The build reads only this file.
 
 ### Workflow
 
@@ -151,6 +152,7 @@ One public bucket, served from `imageOrigin`, with `Cache-Control: public, max-a
 | Only in `content/image/` | Upload, keep the largest variant beside the file, record in the manifest |
 | Only in R2 | Download the largest variant |
 | In the manifest, objects missing in R2 | Recreate from a matching local copy, otherwise an error |
+| In the manifest, variants or thumbnails not what `AREAS` asks for | Remake them from the local copy; `gc` deletes the old ones |
 | A file an image was made from | Nothing; `gc` deletes it |
 
 `gc` runs only when everything is in sync. It deletes images their entry does not name (or whose entry is gone), objects no manifest entry claims, and the files images were made from. It asks for `delete <count>` in an interactive terminal and refuses otherwise.

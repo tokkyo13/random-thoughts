@@ -3,7 +3,7 @@ import { listArt, artUrl } from '../../art';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHeader from '../../components/PageHeader.astro';
 import Pager from '../../components/Pager.astro';
-import { optionalImage, SIZES } from '../../image';
+import { SIZES, thumbnail } from '../../image';
 import { PER_PAGE } from '../../consts';
 
 // /art/  /art/2/
@@ -30,7 +30,7 @@ const { pieces, page, urls } = Astro.props;
     ) : (
       <ul class="art-grid">
         {pieces.map(({ id, data }) => {
-          const cover = optionalImage(data.cover && `art/${id}/${data.cover}`);
+          const cover = thumbnail(data.cover && `art/${id}/${data.cover}`);
           return (
             <li>
               <a href={artUrl(id)}>

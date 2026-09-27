@@ -7,10 +7,10 @@ import crypto from 'node:crypto';
 import readline from 'node:readline/promises';
 import { AwsClient } from 'aws4fetch';
 import sharp from 'sharp';
-import { AREAS, BUCKET, NAME_HASH, SHARE_WIDTH, shareKey, variantKey, type Manifest } from '../src/image/config.ts';
+import { AREAS, BUCKET, NAME_HASH, SHARE_WIDTH, shareKey, thumbKey, variantKey, type Manifest, type Thumb } from '../src/image/config.ts';
 import {
-  collectRefs, objectKeys, planCovers, planGc, planStrays, planSync, splitKey, variantWidths, writeNames,
-  type CoverCopy, type Items, type LocalFile, type SyncPlan,
+  collectRefs, objectKeys, planCovers, planGc, planStrays, planSync, splitKey, topWidth, variantsFor, writeNames,
+  type CoverCopy, type Items, type LocalFile, type SyncPlan, type Upload,
 } from './img-plan.ts';
 
 const ROOT = 'content/image';
@@ -76,6 +76,9 @@ const md5 = (buf: Buffer) => crypto.createHash('md5').update(buf).digest('hex');
 
 // sharp drops all metadata (EXIF, GPS) from what it writes.
 const avif = (buf: Buffer, width: number) => sharp(buf).rotate().resize({ width }).avif({ quality: 50 }).toBuffer();
+// Fills the frame from the middle, as object-fit: cover would
+const thumb = (buf: Buffer, [width, height]: Thumb) =>
+  sharp(buf).rotate().resize({ width, height, fit: 'cover' }).avif({ quality: 50 }).toBuffer();
 
 // Hashes every file on every run (about 600 MB/s); cache MD5s by size and mtime if plan gets slow.
 function scanLocal(): LocalFile[] {
@@ -96,6 +99,13 @@ function scanLocal(): LocalFile[] {
     });
 }
 
+/** The size an upload is kept at, or a repair already is. */
+async function keptSize(u: Upload, recorded: boolean) {
+  const { width, height } = await orientedSize(fs.readFileSync(path.join(ROOT, u.dir, u.from)));
+  const top = recorded ? width : topWidth(u.dir, u.stem.split('-')[0], width);
+  return { width: top, height: Math.round((height * top) / width) };
+}
+
 /** Width and height as displayed, after applying the EXIF orientation. */
 async function orientedSize(buf: Buffer) {
   const m = await sharp(buf).metadata();
@@ -108,11 +118,13 @@ async function printSync(plan: SyncPlan, covers: CoverCopy[]) {
   const add = (dir: string, line: string) => lines.set(dir, [...(lines.get(dir) ?? []), line]);
   for (const [sign, list] of [['+', plan.uploads], ['*', plan.repairs]] as const) {
     for (const u of list) {
-      const { width } = await orientedSize(fs.readFileSync(path.join(ROOT, u.dir, u.from)));
-      const n = variantWidths(u.dir, u.stem.split('-')[0], width).length;
-      const action = `${sign === '+' ? 'upload' : 'repair'} + ${n} variant${n > 1 ? 's' : ''}`;
+      const { width, height } = await keptSize(u, sign === '*');
+      const { variants, thumbs = [] } = variantsFor(`${u.dir}/${u.stem}`, width, height);
+      const count = (n: number, what: string) => `${n} ${what}${n > 1 ? 's' : ''}`;
+      const made = [count(variants.length, 'variant'), ...(thumbs.length > 0 ? [count(thumbs.length, 'thumb')] : [])];
+      const action = `${sign === '+' ? 'upload' : 'repair'} + ${made.join(', ')}`;
       const renamed = u.from === `${u.stem}.avif` ? '' : `  <- ${u.from}`;
-      add(u.dir, `  ${sign} ${u.stem.padEnd(NAME_COL)}  ${action.padEnd(20)}${renamed}`);
+      add(u.dir, `  ${sign} ${u.stem.padEnd(NAME_COL)}  ${action.padEnd(30)}${renamed}`);
     }
   }
   for (const d of plan.downloads) {
@@ -121,7 +133,7 @@ async function printSync(plan: SyncPlan, covers: CoverCopy[]) {
   }
   for (const c of covers) {
     const stem = c.to.slice(0, c.to.lastIndexOf('.'));
-    add(c.dir, `  + ${stem.padEnd(NAME_COL)}  ${'copy of the first image'.padEnd(20)}  <- ${c.from}`);
+    add(c.dir, `  + ${stem.padEnd(NAME_COL)}  ${'copy of the first image'.padEnd(30)}  <- ${c.from}`);
   }
   for (const dir of [...lines.keys()].sort()) console.log(`\n${dir}\n${lines.get(dir)!.join('\n')}`);
   for (const w of plan.warnings) console.log(`\n! ${w}`);
@@ -169,17 +181,20 @@ async function main() {
   }
 
   // An upload makes every variant from the dropped-in file and keeps the largest in content/image/;
-  // the dropped-in file stays until gc. A repair makes them again from that largest one.
+  // the dropped-in file stays until gc. A repair makes them again from that largest one, which
+  // it never remakes, and so does a change to AREAS; what they replace, gc deletes.
   for (const u of [...plan.uploads, ...plan.repairs]) {
     const key = `${u.dir}/${u.stem}`;
     const recorded = manifest.images[key];
     const buf = fs.readFileSync(path.join(ROOT, u.dir, u.from));
-    const variants = variantWidths(u.dir, u.stem.split('-')[0], (await orientedSize(buf)).width);
+    const largest = recorded ? buf : await avif(buf, (await keptSize(u, false)).width);
+    const { width, height } = await sharp(largest).metadata();
+    const { variants, thumbs } = variantsFor(key, width!, height!);
     const top = variants.at(-1)!;
-    const largest = recorded ? buf : await avif(buf, top);
     for (const w of variants) {
       await bucket.put(variantKey(key, w), w === top ? largest : await avif(buf, w), 'image/avif');
     }
+    for (const t of thumbs ?? []) await bucket.put(thumbKey(key, t), await thumb(buf, t), 'image/avif');
     const share = shareKey(key);
     if (share) {
       const jpeg = await sharp(buf).rotate().resize({ width: Math.min(SHARE_WIDTH, top) }).jpeg({ quality: 78 }).toBuffer();
@@ -190,9 +205,8 @@ async function main() {
       if (fs.existsSync(to)) throw new Error(`${to} already exists`);
       fs.writeFileSync(to, largest);
     }
-    const { width, height } = await sharp(largest).metadata();
     const source = recorded?.source ?? u.md5;
-    manifest.images[key] = { width: width!, height: height!, size: largest.length, md5: md5(largest), source, variants };
+    manifest.images[key] = { width: width!, height: height!, size: largest.length, md5: md5(largest), source, variants, ...(thumbs && { thumbs }) };
     saveManifest(manifest); // after every image, so an interrupted run loses nothing
     console.log(`uploaded ${key}`);
   }

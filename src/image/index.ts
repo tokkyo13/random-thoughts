@@ -1,5 +1,5 @@
 import manifest from '../../content/image/manifest.json';
-import { IMAGE_ORIGIN, shareKey, variantKey, type Manifest } from './config';
+import { IMAGE_ORIGIN, shareKey, thumbKey, variantKey, type Manifest } from './config';
 
 const { images } = manifest as Manifest;
 
@@ -37,11 +37,29 @@ export function shareImage(key: string | undefined): string | undefined {
   return share && `${IMAGE_ORIGIN}/${share}`;
 }
 
-/** Like image(), but undefined for an empty or unknown key, so a list shows its empty frame. */
+/** Like image(), but undefined for an empty or unknown key. */
 export const optionalImage = (key: string | undefined, loading?: 'lazy' | 'eager') =>
   key && images[key] ? image(key, loading) : undefined;
 
-// Each mirrors a layout in CSS. The page column is 56rem plus two gutters of at most 2.5rem: 61rem.
+/**
+ * <img> attributes for a cover in a list, from its thumbnails. Undefined for an empty or unknown
+ * key, or a cover not yet given thumbnails, so the list shows its empty frame.
+ */
+export function thumbnail(key: string | undefined) {
+  const thumbs = key ? images[key]?.thumbs : undefined;
+  if (!thumbs) return undefined;
+  const url = (i: number) => `${IMAGE_ORIGIN}/${thumbKey(key!, thumbs[i])}`;
+  return {
+    src: url(thumbs.length - 1),
+    srcset: thumbs.map(([w], i) => `${url(i)} ${w}w`).join(', '),
+    width: thumbs[0][0],
+    height: thumbs[0][1],
+    loading: 'lazy' as const,
+    decoding: 'async' as const,
+  };
+}
+
+// Each mirrors a layout in CSS; the thumb frames in AREAS in ./config mirror the largest of theirs. The page column is 56rem plus two gutters of at most 2.5rem: 61rem.
 export const SIZES = {
   prose: '(min-width: 61rem) 56rem, 100vw',
   // A plate main gives the pictures the whole middle: the page less both rails and its gutters

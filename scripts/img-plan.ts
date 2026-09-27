@@ -1,5 +1,7 @@
 // Planning logic for img.ts, kept free of I/O so img-plan.test.ts can check every rule.
-import { AREAS, NAME_HASH, SHARE_TYPE, shareKey, variantKey, type ImageEntry, type Manifest } from '../src/image/config.ts';
+import {
+  AREAS, COVER_TYPE, NAME_HASH, shareKey, THUMB_SCALES, thumbKey, variantKey, type ImageEntry, type Manifest, type Thumb,
+} from '../src/image/config.ts';
 
 const EXT_ALIASES: Record<string, string> = { jpeg: 'jpg', tiff: 'tif' };
 const EXTS = new Set(['jpg', 'png', 'webp', 'avif', 'gif', 'tif']);
@@ -14,7 +16,7 @@ export type Download = { key: string; entry: ImageEntry };
 
 export type SyncPlan = {
   uploads: Upload[]; // not in the manifest
-  repairs: Upload[]; // in the manifest, objects missing on R2
+  repairs: Upload[]; // in the manifest, objects missing on R2 or not what AREAS asks for
   downloads: Download[]; // in the manifest, missing in content/image/
   imported: LocalFile[]; // files an AVIF in content/image/ was made from; gc deletes them
   warnings: string[];
@@ -43,17 +45,47 @@ export function areaOf(dir: string): string | undefined {
 
 const typesOf = (dir: string) => Object.keys(AREAS[areaOf(dir)!].types);
 
-/** The listed widths below the largest, then the largest: the image's own width, capped by the last. */
-export function variantWidths(dir: string, type: string, width: number): number[] {
-  const list = AREAS[areaOf(dir)!].types[type] ?? [];
-  const top = list.length > 0 ? Math.min(width, list.at(-1)!) : width;
-  return [...list.filter((w) => w < top), top];
+const widthsOf = (dir: string, type: string) => AREAS[areaOf(dir)!].types[type] ?? [];
+
+/** The width a new file is kept at: its own, capped by the last listed width. */
+export function topWidth(dir: string, type: string, width: number): number {
+  const list = widthsOf(dir, type);
+  return list.length > 0 ? Math.min(width, list.at(-1)!) : width;
 }
 
-/** The variants, largest first, then the share JPEG a cover carries. */
+/** For an image kept at this width: the listed widths below it, then its own. */
+export function variantWidths(dir: string, type: string, width: number): number[] {
+  return [...widthsOf(dir, type).filter((w) => w < width), width];
+}
+
+/**
+ * A cover's thumbnails: the area's frame at each scale the image can fill, else the largest
+ * crop at that ratio it holds. Other types have none.
+ */
+export function thumbSizes(dir: string, type: string, width: number, height: number): Thumb[] {
+  if (type !== COVER_TYPE) return [];
+  const [fw, fh] = AREAS[areaOf(dir)!].thumb;
+  const fits = THUMB_SCALES.map((s): Thumb => [fw * s, fh * s]).filter(([w, h]) => w <= width && h <= height);
+  const s = Math.min(width / fw, height / fh);
+  return fits.length > 0 ? fits : [[Math.floor(fw * s), Math.floor(fh * s)]];
+}
+
+/** What AREAS asks of an image kept at this size. */
+export function variantsFor(key: string, width: number, height: number) {
+  const [dir, stem] = splitKey(key);
+  const type = stem.split('-')[0];
+  const thumbs = thumbSizes(dir, type, width, height);
+  return { variants: variantWidths(dir, type, width), ...(thumbs.length > 0 && { thumbs }) };
+}
+
+/** The variants, largest first, then a cover's thumbnails and share JPEG. */
 export function objectKeys(key: string, entry: ImageEntry): string[] {
   const share = shareKey(key);
-  return [...entry.variants.toReversed().map((w) => variantKey(key, w)), ...(share ? [share] : [])];
+  return [
+    ...entry.variants.toReversed().map((w) => variantKey(key, w)),
+    ...(entry.thumbs ?? []).map((t) => thumbKey(key, t)),
+    ...(share ? [share] : []),
+  ];
 }
 
 function normalizeExt(name: string): string {
@@ -115,17 +147,22 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
     const file = localByKey.get(key);
     const missing = keys.filter((k) => !remote.has(k));
     const largest = keys[0];
+    const { variants, thumbs } = variantsFor(key, entry.width, entry.height);
+    const outdated = JSON.stringify([entry.variants, entry.thumbs]) !== JSON.stringify([variants, thumbs]);
+    const repair = () => {
+      const [dir, stem] = splitKey(key);
+      plan.repairs.push({ dir, from: file!.name, stem, md5: file!.md5 });
+    };
     if (remote.has(largest) && remote.get(largest) !== entry.size) {
       plan.errors.push(`${key}  size on R2 does not match content/image/manifest.json`);
     } else if (missing.length > 0) {
-      if (file) {
-        const [dir, stem] = splitKey(key);
-        plan.repairs.push({ dir, from: file.name, stem, md5: file.md5 });
-      } else {
-        plan.errors.push(`${key}  ${missing.length} object(s) missing on R2 and no matching local copy`);
-      }
+      if (file) repair();
+      else plan.errors.push(`${key}  ${missing.length} object(s) missing on R2 and no matching local copy`);
     } else if (!file) {
+      // An outdated image is remade on the next apply, from the copy this one downloads
       plan.downloads.push({ key, entry });
+    } else if (outdated) {
+      repair();
     }
   }
 
@@ -142,8 +179,8 @@ export function planSync(local: LocalFile[], manifest: Manifest, remote: Map<str
     stemsByDir.set(dir, [...(stemsByDir.get(dir) ?? []), stem]);
   }
   for (const [dir, stems] of stemsByDir) {
-    if (AREAS[areaOf(dir)!].autoCover && stems.every((s) => s.startsWith(`${SHARE_TYPE}-`))) {
-      plan.errors.push(`${dir}/  a cover alone; add the images it covers, named without "${SHARE_TYPE}"`);
+    if (AREAS[areaOf(dir)!].autoCover && stems.every((s) => s.startsWith(`${COVER_TYPE}-`))) {
+      plan.errors.push(`${dir}/  a cover alone; add the images it covers, named without "${COVER_TYPE}"`);
     }
   }
   if (plan.imported.length > 0) {
@@ -162,7 +199,7 @@ export function planCovers(local: LocalFile[], plan: SyncPlan, manifest: Manifes
   for (const [dir, stems] of plan.order) {
     const area = areaOf(dir);
     if (!area || !AREAS[area].autoCover) continue;
-    const covered = (s: string) => s.startsWith(`${SHARE_TYPE}-`);
+    const covered = (s: string) => s.startsWith(`${COVER_TYPE}-`);
     if (stems.some(covered)) continue;
     if (Object.keys(manifest.images).some((k) => splitKey(k)[0] === dir && covered(splitKey(k)[1]))) continue;
     // The same order the names are listed in, so the cover is the image the page opens with.
@@ -170,7 +207,7 @@ export function planCovers(local: LocalFile[], plan: SyncPlan, manifest: Manifes
     const first = local
       .filter((f) => f.dir === dir && EXTS.has(normalizeExt(f.name)))
       .sort((x, y) => x.name.localeCompare(y.name))[0];
-    copies.push({ dir, from: first.name, to: `${SHARE_TYPE}-${first.md5.slice(0, NAME_HASH)}.${normalizeExt(first.name)}` });
+    copies.push({ dir, from: first.name, to: `${COVER_TYPE}-${first.md5.slice(0, NAME_HASH)}.${normalizeExt(first.name)}` });
   }
   return copies;
 }
@@ -191,7 +228,7 @@ export function writeNames(text: string, names: string[]): WriteResult {
   if (lines[0] !== '---' || end < 0) return { text, added: [], problem: 'has no frontmatter' };
   const added: string[] = [];
 
-  const cover = names.find((n) => n.startsWith(`${SHARE_TYPE}-`));
+  const cover = names.find((n) => n.startsWith(`${COVER_TYPE}-`));
   const coverAt = lines.findIndex((l, i) => i > 0 && i < end && /^cover:\s*(''|""|)\s*$/.test(l));
   if (cover && coverAt > 0) {
     lines[coverAt] = `cover: '${cover}'`;

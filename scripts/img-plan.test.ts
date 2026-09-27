@@ -1,7 +1,9 @@
 // npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areaOf, collectRefs, planCovers, planGc, planStrays, planSync, variantWidths, writeNames } from './img-plan.ts';
+import {
+  areaOf, collectRefs, planCovers, planGc, planStrays, planSync, thumbSizes, topWidth, variantWidths, writeNames,
+} from './img-plan.ts';
 
 const J = 'journal/1789139909';
 const MD5 = 'a1b2c3d4e5f60718293a4b5c6d7e8f90'; // -> figure-a1b2c3d4, cover-a1b2c3d4
@@ -78,10 +80,10 @@ test('missing locally downloads; missing on R2 repairs from a matching local cop
   assert.match(planSync([], twoWidths, partial).errors[0], /missing on R2/);
 });
 
-test('a cover also owes a share JPEG on R2; other types do not', () => {
+test('a cover also owes thumbnails and a share JPEG on R2; other types do not', () => {
   const C = `${J}/cover-a1b2c3d4`;
-  const manifest = { images: { [C]: entry } };
-  const withoutShare = new Map([[`${C}.448w.avif`, 10]]);
+  const manifest = { images: { [C]: { ...entry, thumbs: [[256, 144]] as [number, number][] } } };
+  const withoutShare = new Map([[`${C}.448w.avif`, 10], [`${C}.256x144.avif`, 3]]);
   // The share JPEG is missing, so the matching local copy repairs it
   assert.equal(planSync([file(J, 'cover-a1b2c3d4.avif')], manifest, withoutShare).repairs.length, 1);
   const withShare = new Map([...withoutShare, [`${C}.share.jpg`, 3]]);
@@ -128,10 +130,31 @@ test('gc also takes the objects no image claims, and leaves the ones they do', (
 });
 
 test('the largest variant is the image at its own width, capped by the last listed width', () => {
-  assert.deepEqual(variantWidths(J, 'figure', 5000), [448, 896, 1792]);
+  assert.equal(topWidth(J, 'figure', 5000), 1792);
+  assert.equal(topWidth(J, 'figure', 1000), 1000);
   assert.deepEqual(variantWidths(J, 'figure', 1792), [448, 896, 1792]);
   assert.deepEqual(variantWidths(J, 'figure', 1000), [448, 896, 1000]);
   assert.deepEqual(variantWidths(J, 'figure', 300), [300]);
+  // Kept above a cap lowered since, it stays as it is
+  assert.deepEqual(variantWidths(J, 'cover', 1792), [1792]);
+});
+
+test('a cover gets the frame at each scale it can fill, else the largest crop it holds', () => {
+  assert.deepEqual(thumbSizes(J, 'cover', 1792, 1008), [[256, 144], [512, 288], [768, 432]]);
+  assert.deepEqual(thumbSizes(J, 'cover', 600, 1200), [[256, 144], [512, 288]]);
+  assert.deepEqual(thumbSizes('art/1789139909', 'cover', 1792, 400), [[168, 168], [336, 336]]);
+  assert.deepEqual(thumbSizes(J, 'cover', 200, 200), [[200, 112]]);
+  assert.deepEqual(thumbSizes(J, 'figure', 1792, 1008), []);
+});
+
+test('an image whose variants are not what AREAS asks for is remade from its local copy', () => {
+  const C = `${J}/cover-a1b2c3d4`;
+  const old = { ...entry, variants: [320, 448] };
+  const remote = new Map([[`${C}.448w.avif`, 10], [`${C}.320w.avif`, 5], [`${C}.share.jpg`, 3]]);
+  const manifest = { images: { [C]: old } };
+  assert.equal(planSync([file(J, 'cover-a1b2c3d4.avif')], manifest, remote).repairs.length, 1);
+  // Without the local copy, it is downloaded first
+  assert.equal(planSync([], manifest, remote).downloads.length, 1);
 });
 
 test('an art item without a cover has its first image copied to one', () => {

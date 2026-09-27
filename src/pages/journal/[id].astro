@@ -1,7 +1,7 @@
 ---
 import { render } from 'astro:content';
 import { listJournal } from '../../journal';
-import { optionalImage, shareImage, SIZES } from '../../image';
+import { shareImage } from '../../image';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Fig from '../../components/mdx/Fig.astro';
@@ -23,7 +23,6 @@ const { post } = Astro.props;
 const { Content, headings } = await render(post);
 const toc = headings.filter((h) => h.depth === 1);
 const coverKey = post.data.cover && `journal/${post.id}/${post.data.cover}`;
-const cover = optionalImage(coverKey, 'eager');
 ---
 
 <BaseLayout
@@ -44,13 +43,6 @@ const cover = optionalImage(coverKey, 'eager');
     </header>
 
     <div class="prose">
-      {
-        cover && (
-          <figure>
-            <img {...cover} sizes={SIZES.prose} fetchpriority="high" alt="" />
-          </figure>
-        )
-      }
       <Content components={{ Fig, Note, Code, pre: Pre, a: ProseLink }} />
     </div>
   </article>
