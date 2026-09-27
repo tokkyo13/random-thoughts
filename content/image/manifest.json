@@ -348,6 +348,114 @@
         ]
       ]
     },
+    "art/1790506191/art-63b63063": {
+      "width": 1792,
+      "height": 1263,
+      "size": 43741,
+      "md5": "139e27a827839cf14d55a0ff32fd11d3",
+      "source": "63b630639b4d51e9cc08cd5c4fc883b9",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1790506191/cover-63b63063": {
+      "width": 1792,
+      "height": 1263,
+      "size": 43741,
+      "md5": "139e27a827839cf14d55a0ff32fd11d3",
+      "source": "63b630639b4d51e9cc08cd5c4fc883b9",
+      "variants": [
+        1792
+      ],
+      "thumbs": [
+        [
+          168,
+          168
+        ],
+        [
+          336,
+          336
+        ],
+        [
+          504,
+          504
+        ]
+      ]
+    },
+    "art/1790509063/art-1a64725a": {
+      "width": 1792,
+      "height": 2543,
+      "size": 101684,
+      "md5": "76ec13e6f557707ae12739fdf2e9a4eb",
+      "source": "1a64725ac58cf95f04b7dc61d796afd8",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1790509063/cover-1a64725a": {
+      "width": 1792,
+      "height": 2543,
+      "size": 101684,
+      "md5": "76ec13e6f557707ae12739fdf2e9a4eb",
+      "source": "1a64725ac58cf95f04b7dc61d796afd8",
+      "variants": [
+        1792
+      ],
+      "thumbs": [
+        [
+          168,
+          168
+        ],
+        [
+          336,
+          336
+        ],
+        [
+          504,
+          504
+        ]
+      ]
+    },
+    "art/1790509197/art-84631e4d": {
+      "width": 1792,
+      "height": 2390,
+      "size": 66857,
+      "md5": "e4ebe477bdd05b1e01283860d924fd93",
+      "source": "84631e4d77f15f4d257a9bd75ed1d12e",
+      "variants": [
+        640,
+        896,
+        1792
+      ]
+    },
+    "art/1790509197/cover-1a5004f2": {
+      "width": 1792,
+      "height": 1792,
+      "size": 49648,
+      "md5": "da1111f52955c323fbcb292651ff02f2",
+      "source": "1a5004f2e01155e6d07f624232d6fdcf",
+      "variants": [
+        1792
+      ],
+      "thumbs": [
+        [
+          168,
+          168
+        ],
+        [
+          336,
+          336
+        ],
+        [
+          504,
+          504
+        ]
+      ]
+    },
     "journal/1789204809/cover-e5a86357": {
       "width": 1792,
       "height": 1008,
