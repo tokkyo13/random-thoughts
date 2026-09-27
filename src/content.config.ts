@@ -30,13 +30,16 @@ const work = defineCollection({
   }),
 });
 
-// One illustration per file, laid out like an article: the body is the description, and it is
-// the only optional part. The file name (unix seconds) is the id, the URL and the image directory.
+// One illustration per file, laid out like an article: the body is the description shown on the
+// page. The file name (unix seconds) is the id, the URL and the image directory.
 const art = defineCollection({
   loader: glob({ base: './content/art', pattern: '*.mdx' }),
   schema: z.object({
     title: z.string(),
+    // For the page head and the feed only; the page shows the body
     description: z.string().optional(),
+    // The work a piece of fan art is drawn from. Having one is what marks the piece as fan art.
+    original: z.object({ title: z.string(), url: z.url() }).strict().optional(),
     pubDate: z.coerce.date(),
     // The thumbnail of the list and the picture a link preview reads. It is a copy of the
     // first image unless one is named; "npm run img apply" makes it.

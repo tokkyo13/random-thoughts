@@ -1,9 +1,12 @@
 ---
+import { render } from 'astro:content';
 import { listArt } from '../../art';
 import { optionalImage, shareImage } from '../../image';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Shot from '../../components/Shot.astro';
+import ExternalLink from '../../components/ExternalLink.astro';
+import ProseLink from '../../components/mdx/ProseLink.astro';
 import ArtControls from '../../components/pane/ArtControls.astro';
 import Tune from '../../assets/icons/tune.svg';
 
@@ -15,7 +18,8 @@ export async function getStaticPaths() {
 }
 
 const { piece } = Astro.props;
-const { title, description } = piece.data;
+const { title, description, original } = piece.data;
+const { Content } = await render(piece);
 const coverKey = piece.data.cover && `art/${piece.id}/${piece.data.cover}`;
 // A name with no image yet is left out, so the rest of the entry still shows
 const shots = piece.data.images.flatMap(
@@ -68,14 +72,17 @@ const [first, ...rest] = shots;
     }
     <div class="entry">
       <header class="item-head">
-        <p>
+        <p class="meta">
           <FormattedDate date={piece.data.pubDate} />
+          {original && <ExternalLink class="original" href={original.url}>FA: {original.title}</ExternalLink>}
         </p>
 
         <h1>{title}</h1>
       </header>
 
-      {description && <p class="description">{description}</p>}
+      <div class="prose description">
+        <Content components={{ a: ProseLink }} />
+      </div>
     </div>
   </div>
 </BaseLayout>
@@ -224,9 +231,30 @@ const [first, ...rest] = shots;
     margin-inline: auto;
   }
 
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--nav-gap);
+  }
+
+  /* Fan art, and a way to the work it is drawn from: a pill beside the date, as the draft
+     mark of the Journal list is */
+  .original {
+    padding: 0.05em 0.7em;
+    background: var(--surface);
+    border: var(--rule);
+    border-radius: var(--radius-pill);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .original:hover {
+    color: var(--text);
+  }
+
   .description {
     margin: var(--item-gap) 0 0;
-    letter-spacing: var(--ls-prose);
     line-height: var(--lh-relaxed);
   }
 </style>

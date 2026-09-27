@@ -91,12 +91,13 @@ These components are available without an import:
 
 ### Art: `content/art/<id>.mdx`
 
-The body is empty.
+The body is the description shown on the page.
 
 | Field | Required | Description |
 | --- | --- | --- |
 | `title` | yes | Title |
-| `description` | | Description, also given to the feed |
+| `description` | | Description for the page head and the feed; not shown on the page |
+| `original` | | For fan art, the work it is drawn from: `title` and `url`. The page marks it as fan art and links there |
 | `pubDate` | yes | Publication date; the list is sorted by it |
 | `cover` | yes | Thumbnail and link preview image |
 | `images` | | The images, in display order |
